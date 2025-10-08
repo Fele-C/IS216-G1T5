@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Outdoor Exercise Safety</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding: 40px;
+      background: #f0f8ff;
+    }
+    input {
+      padding: 10px;
+      font-size: 1em;
+      width: 250px;
+    }
+    button {
+      padding: 10px 20px;
+      font-size: 1em;
+      margin-left: 10px;
+    }
+    #result {
+      margin-top: 30px;
+      font-size: 1.2em;
+      padding: 20px;
+      border-radius: 10px;
+    }
+    .safe { background-color: #d4edda; color: #155724; }
+    .caution { background-color: #fff3cd; color: #856404; }
+    .unsafe { background-color: #f8d7da; color: #721c24; }
+  </style>
+</head>
+<body>
+  <h2>🏃 Outdoor Exercise Safety Checker</h2>
+  <input type="text" id="cityInput" placeholder="Enter city name (e.g., Singapore)" />
+  <button onclick="checkSafety()">Check Conditions</button>
+  <div id="result"></div>
+
+  <script src="weather.js"></script>
+</body>
+</html>
