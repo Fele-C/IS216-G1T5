@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>OutdoorFinder - Activity Locations</title>
+    <!-- <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script> -->
+    <link rel="stylesheet" href="public/styles.css" />
+  </head>
+  <body>
+    <!-- Navbar -->
+    <nav class="navbar">
+      <div class="nav-container">
+        <div class="nav-logo">
+          <svg class="logo-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 2v20M2 12h20"></path>
+          </svg>
+          <span class="logo-text">OutdoorFinder</span>
+        </div>
+        <div class="nav-links">
+          <a href="#" class="nav-link">Home</a>
+          <a href="#" class="nav-link active">Activities</a>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content" id="mainContent">
+      <!-- Activity Locations View -->
+      <div id="activityLocationsView" class="view">
+        <div class="container">
+          <h1 class="page-title">Activity Locations</h1>
+          <p class="page-subtitle">Find the perfect outdoor location based on weather conditions</p>
+
+          <div class="selector-container">
+            <label for="activity-select" class="selector-label">Select an activity to view locations:</label>
+            <select id="activity-select" class="activity-selector">
+              <option value="">Choose an activity...</option>
+            </select>
+          </div>
+
+          <div id="carouselsContainer" class="carousels-container"></div>
+        </div>
+      </div>
+
+      <!-- All Locations View -->
+      <div id="allLocationsView" class="view hidden">
+        <div class="container">
+          <button id="backButton" class="back-button">
+            <svg class="back-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M19 12H5M12 19l-7-7 7-7"></path>
+            </svg>
+            Back to all activities
+          </button>
+
+          <h1 class="page-title" id="allLocationsTitle">All Locations</h1>
+          <p class="page-subtitle" id="allLocationsSubtitle"></p>
+
+          <div id="allLocationsGrid" class="locations-grid"></div>
+        </div>
+      </div>
+
+      <!-- Loading State -->
+      <div id="loadingView" class="loading-view">
+        <div class="loading-spinner"></div>
+        <p>Loading activities...</p>
+      </div>
+    </main>
+
+    <script src="public/app.js"></script>
+  </body>
+</html>

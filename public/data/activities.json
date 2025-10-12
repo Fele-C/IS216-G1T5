@@ -1,0 +1,44 @@
+[
+  {
+    "id": 1,
+    "name": "Parks for Walking/Hiking/Running",
+    "slug": "parks",
+    "icon": "trees"
+  },
+  {
+    "id": 2,
+    "name": "Stadiums for Running",
+    "slug": "stadiums",
+    "icon": "flag"
+  },
+  {
+    "id": 3,
+    "name": "Cycling Routes for Cycling",
+    "slug": "cycling",
+    "icon": "bike"
+  },
+  {
+    "id": 4,
+    "name": "Kayaking Routes for Kayaking",
+    "slug": "kayaking",
+    "icon": "waves"
+  },
+  {
+    "id": 5,
+    "name": "Beach for Beach Sports",
+    "slug": "beach",
+    "icon": "umbrella"
+  },
+  {
+    "id": 6,
+    "name": "Pools for Swimming",
+    "slug": "pools",
+    "icon": "droplet"
+  },
+  {
+    "id": 7,
+    "name": "Campsites for Camping",
+    "slug": "campsites",
+    "icon": "tent"
+  }
+]

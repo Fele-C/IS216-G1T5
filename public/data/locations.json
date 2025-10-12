@@ -1,0 +1,277 @@
+[
+  {
+    "id": 1,
+    "activity_type_id": 1,
+    "name": "Central Park Trail",
+    "image_url": "https://images.pexels.com/photos/1166209/pexels-photo-1166209.jpeg?auto=compress&cs=tinysrgb&w=800",
+    "description": "A beautiful scenic trail winding through lush greenery with well-maintained paths perfect for all skill levels.",
+    "address": "123 Park Avenue, Central District",
+    "facilities": ["Restrooms","Water Fountains","Parking","Benches"],"region": "North",
+    "type": "Urban"
+    
+  },
+  {
+    "id": 2,
+    "activity_type_id": 1,
+    "name": "Mountain View Park",
+    "image_url": "https://images.pexels.com/photos/2662816/pexels-photo-2662816.jpeg?auto=compress&cs=tinysrgb&w=800",
+    "description": "Challenging hiking trails with breathtaking mountain views and diverse terrain for experienced hikers.",
+    "address": "456 Highland Road, North District",
+    "facilities": ["Parking","Trail Maps","Scenic Viewpoints"],
+    "region": "North",
+    "type": "Urban"
+  },
+  {
+    "id": 3,
+    "activity_type_id": 1,
+    "name": "Riverside Walking Path",
+    "image_url": "https://images.pexels.com/photos/1770809/pexels-photo-1770809.jpeg?auto=compress&cs=tinysrgb&w=800",
+    "description": "Peaceful riverside path ideal for leisurely walks and jogging with beautiful water views.",
+    "address": "789 River Street, East District",
+    "facilities": ["Restrooms","Bike Racks","Lighting","Benches"],
+    "region": "North",
+    "type": "Urban"
+  },
+  {
+    "id": 4,
+    "activity_type_id": 1,
+    "name": "Forest Loop Trail",
+    "image_url": "https://images.pexels.com/photos/1578750/pexels-photo-1578750.jpeg?auto=compress&cs=tinysrgb&w=800",
+    "description": "Moderate forest trail with shaded areas and natural terrain perfect for trail running.",
+    "address": "321 Forest Drive, West District",
+    "facilities": ["Parking","Trail Markers","Water Fountains"],
+    "region": "North",
+    "type": "Urban"
+  },
+  {
+    "id": 5,
+    "activity_type_id": 2,
+    "name": "City Sports Complex",
+    "image_url": "https://images.pexels.com/photos/2834917/pexels-photo-2834917.jpeg?auto=compress&cs=tinysrgb&w=800",
+    "description": "Professional running track with 400m lanes and excellent surface for speed training.",
+    "address": "100 Sports Avenue, Downtown",
+    "facilities": ["Locker Rooms","Bleachers","Lighting","Water Stations"],
+    "region": "North",
+    "type": "Urban"
+  },
+  {
+    "id": 6,
+    "activity_type_id": 2,
+    "name": "University Athletic Track",
+    "image_url": "https://images.pexels.com/photos/2834919/pexels-photo-2834919.jpeg?auto=compress&cs=tinysrgb&w=800",
+    "description": "Olympic-standard track facility with timing systems and spectator seating.",
+    "address": "200 College Road, University District",
+    "facilities": ["Parking","Restrooms","Equipment Storage","Timing Systems"],
+    "region": "North",
+    "type": "Urban"
+  },
+  {
+    "id": 7,
+    "activity_type_id": 2,
+    "name": "Community Stadium",
+    "image_url": "https://images.pexels.com/photos/1263426/pexels-photo-1263426.jpeg?auto=compress&cs=tinysrgb&w=800",
+    "description": "Accessible community track open to all levels with friendly atmosphere.",
+    "address": "300 Community Lane, South District",
+    "facilities": ["Free Entry","Water Fountains","Benches","Parking"],
+    "region": "North",
+    "type": "Urban"
+  },
+  {
+    "id": 8,
+    "activity_type_id": 2,
+    "name": "Regional Sports Arena",
+    "image_url": "https://images.pexels.com/photos/114296/pexels-photo-114296.jpeg?auto=compress&cs=tinysrgb&w=800",
+    "description": "Multi-purpose arena with indoor and outdoor tracks for year-round training.",
+    "address": "400 Arena Boulevard, Central District",
+    "facilities": ["Indoor Track","Locker Rooms","Cafe","Pro Shop"],
+    "region": "North",
+    "type": "Urban"
+  },
+  {
+    "id": 9,
+    "activity_type_id": 3,
+    "name": "Coastal Bike Path",
+    "image_url": "https://images.pexels.com/photos/100582/pexels-photo-100582.jpeg?auto=compress&cs=tinysrgb&w=800",
+    "description": "Scenic 25km coastal route with ocean views and gentle slopes perfect for leisurely rides.",
+    "address": "Starting Point: Beach Road, Coastal District",
+    "facilities": ["Bike Rental","Rest Stops","Scenic Viewpoints","Bike Repair Stations"],
+    "region": "North",
+    "type": "Urban"
+  },
+  {
+    "id": 10,
+    "activity_type_id": 3,
+    "name": "Mountain Trail Circuit",
+    "image_url": "https://images.pexels.com/photos/221210/pexels-photo-221210.jpeg?auto=compress&cs=tinysrgb&w=800",
+    "description": "Challenging 40km mountain biking circuit with steep climbs and technical descents.",
+    "address": "Trailhead: Mountain Pass Road, Highland Area",
+    "facilities": ["Parking","Trail Maps","Emergency Call Points"],
+    "region": "North",
+    "type": "Urban"
+  },
+  {
+    "id": 11,
+    "activity_type_id": 3,
+    "name": "Urban Cycling Loop",
+    "image_url": "https://images.pexels.com/photos/1796732/pexels-photo-1796732.jpeg?auto=compress&cs=tinysrgb&w=800",
+    "description": "Safe 15km dedicated cycling path through city parks and landmarks.",
+    "address": "Starting Point: City Center Plaza",
+    "facilities": ["Bike Lanes","Traffic Signals","Bike Parking","Lighting"],
+    "region": "North",
+    "type": "Urban"
+  },
+  {
+    "id": 12,
+    "activity_type_id": 3,
+    "name": "Valley Greenway",
+    "image_url": "https://images.pexels.com/photos/1571957/pexels-photo-1571957.jpeg?auto=compress&cs=tinysrgb&w=800",
+    "description": "Moderate 30km route through rolling hills with mixed terrain and countryside views.",
+    "address": "Starting Point: Valley Entrance, Rural District",
+    "facilities": ["Parking","Water Stations","Restrooms","Picnic Areas"],
+    "region": "North",
+    "type": "Urban"
+  },
+  {
+    "id": 13,
+    "activity_type_id": 4,
+    "name": "Lake Serenity Route",
+    "image_url": "https://images.pexels.com/photos/1430672/pexels-photo-1430672.jpeg?auto=compress&cs=tinysrgb&w=800",
+    "description": "Calm lake waters perfect for beginners with stunning reflections and wildlife viewing.",
+    "address": "Lake Serenity Marina, North Shore",
+    "facilities": ["Kayak Rental","Launch Ramp","Parking","Life Jackets"],
+    "region": "North",
+    "type": "Urban"
+  },
+  {
+    "id": 14,
+    "activity_type_id": 4,
+    "name": "River Rapids Adventure",
+    "image_url": "https://images.pexels.com/photos/1666021/pexels-photo-1666021.jpeg?auto=compress&cs=tinysrgb&w=800",
+    "description": "Exciting whitewater kayaking with class III rapids for experienced paddlers.",
+    "address": "Rapids Access Point, Upper River Road",
+    "facilities": ["Equipment Rental","Safety Briefings","Emergency Services","Parking"],
+    "region": "North",
+    "type": "Urban"
+  },
+  {
+    "id": 15,
+    "activity_type_id": 4,
+    "name": "Bay Islands Tour",
+    "image_url": "https://images.pexels.com/photos/1732278/pexels-photo-1732278.jpeg?auto=compress&cs=tinysrgb&w=800",
+    "description": "Moderate coastal paddling route exploring hidden coves and small islands.",
+    "address": "Bay Harbor Launch, Coastal Road",
+    "facilities": ["Kayak Rental","Guided Tours","Storage","Restrooms"],
+    "region": "North",
+    "type": "Urban"
+  },
+  {
+    "id": 16,
+    "activity_type_id": 4,
+    "name": "Mangrove Wetlands",
+    "image_url": "https://images.pexels.com/photos/1010657/pexels-photo-1010657.jpeg?auto=compress&cs=tinysrgb&w=800",
+    "description": "Peaceful eco-tour through mangrove forests with abundant bird watching opportunities.",
+    "address": "Wetlands Conservation Area Entrance",
+    "facilities": ["Guided Eco-Tours","Kayak Rental","Educational Center","Parking"],
+    "region": "North",
+    "type": "Urban"
+  },
+  {
+    "id": 17,
+    "activity_type_id": 5,
+    "name": "Sunset Beach",
+    "image_url": "https://images.pexels.com/photos/457878/pexels-photo-457878.jpeg?auto=compress&cs=tinysrgb&w=800",
+    "description": "Popular beach with volleyball courts and plenty of space for beach sports activities.",
+    "address": "1 Ocean Drive, Beachfront",
+    "facilities": ["Volleyball Courts","Showers","Restrooms","Parking","Lifeguards"],
+    "region": "North",
+    "type": "Urban"
+  },
+  {
+    "id": 18,
+    "activity_type_id": 5,
+    "name": "Crystal Cove",
+    "image_url": "https://images.pexels.com/photos/1139541/pexels-photo-1139541.jpeg?auto=compress&cs=tinysrgb&w=800",
+    "description": "Pristine beach perfect for frisbee, paddleball, and beach soccer with fine sand.",
+    "address": "50 Cove Avenue, South Coast",
+    "facilities": ["Equipment Rental","Picnic Tables","BBQ Areas","Parking"],
+    "region": "North",
+    "type": "Urban"
+  },
+  {
+    "id": 19,
+    "activity_type_id": 5,
+    "name": "Surfers Paradise",
+    "image_url": "https://images.pexels.com/photos/1374510/pexels-photo-1374510.jpeg?auto=compress&cs=tinysrgb&w=800",
+    "description": "Active beach community with multiple sport courts and great waves for surfing.",
+    "address": "100 Paradise Road, North Beach",
+    "facilities": ["Surf Rental","Showers","Cafe","Sport Courts","Lifeguards"],
+    "region": "North",
+    "type": "Urban"
+  },
+  {
+    "id": 20,
+    "activity_type_id": 5,
+    "name": "Harbor Beach",
+    "image_url": "https://images.pexels.com/photos/1032650/pexels-photo-1032650.jpeg?auto=compress&cs=tinysrgb&w=800",
+    "description": "Family-friendly beach with calm waters and dedicated areas for beach games.",
+    "address": "25 Harbor Street, Marina District",
+    "facilities": ["Playground","Restrooms","Showers","Food Vendors","Parking"],
+    "region": "North",
+    "type": "Urban"
+  },
+  {
+    "id": 21,
+    "activity_type_id": 6,
+    "name": "Olympic Aquatic Center",
+    "image_url": "https://images.pexels.com/photos/1263349/pexels-photo-1263349.jpeg?auto=compress&cs=tinysrgb&w=800",
+    "description": "50m Olympic-sized pool with professional training facilities and coaching available.",
+    "address": "500 Aquatic Way, Sports Complex",
+    "facilities": ["Olympic Pool","Diving Boards","Locker Rooms","Sauna","Parking"],
+    "region": "North",
+    "type": "Urban"
+  },
+  {
+    "id": 22,
+    "activity_type_id": 6,
+    "name": "Community Recreation Pool",
+    "image_url": "https://images.pexels.com/photos/2804282/pexels-photo-2804282.jpeg?auto=compress&cs=tinysrgb&w=800",
+    "description": "Heated indoor pool perfect for year-round lap swimming and water aerobics.",
+    "address": "200 Recreation Avenue, Community Center",
+    "facilities": ["Heated Pool","Showers","Lockers","Classes","Parking"],
+    "region": "North",
+    "type": "Urban"
+  },
+  {
+    "id": 23,
+    "activity_type_id": 6,
+    "name": "Waterfront Pool Complex",
+    "image_url": "https://images.pexels.com/photos/261403/pexels-photo-261403.jpeg?auto=compress&cs=tinysrgb&w=800",
+    "description": "Outdoor pool complex with multiple pools including lap lanes and leisure areas.",
+    "address": "75 Waterfront Boulevard, Harbor District",
+    "facilities": ["Multiple Pools","Cafe","Sunbathing Area","Showers","Parking"],
+    "region": "North",
+    "type": "Urban"
+  },
+  {
+    "id": 24,
+    "activity_type_id": 6,
+    "name": "University Aquatic Facility",
+    "image_url": "https://images.pexels.com/photos/1263348/pexels-photo-1263348.jpeg?auto=compress&cs=tinysrgb&w=800",
+    "description": "State-of-the-art facility with competition pool and advanced timing systems.",
+    "address": "300 Campus Drive, University",
+    "facilities": ["Competition Pool","Diving Pool","Gym","Locker Rooms","Parking"],
+    "region": "North",
+    "type": "Urban"
+  },
+  {
+    "id": 25,
+    "activity_type_id": 7,
+    "name": "Pine Forest Campground",
+    "image_url": "https://images.pexels.com/photos/699558/pexels-photo-699558.jpeg?auto=compress&cs=tinysrgb&w=800",
+    "description": "Serene forest camping with spacious sites and modern amenities in natural setting.",
+    "address": "Forest Road 45, Pine Valley",
+    "facilities": ["Fire Pits","Picnic Tables","Restrooms","Showers","Parking"],
+    "region": "North",
+    "type": "Urban"
+  }
+]
