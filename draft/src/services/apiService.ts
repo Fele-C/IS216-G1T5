@@ -1,5 +1,5 @@
 // INSERT YOUR API KEYS HERE:
-// const GOOGLE_WEATHER_API_KEY = '';
+const GOOGLE_WEATHER_API_KEY = 'AIzaSyDowpr_xuUgYE9czDZ3rNjcZjqxgRkNLVU';
 // const GOOGLE_PLACES_API_KEY = '';
 // const RAPIDAPI_BMI_KEY = '';
 // const API_NINJAS_KEY = '';
@@ -8,7 +8,8 @@ export const apiService = {
   async getWeatherData(_location: string) {
     try {
       // INSERT GOOGLE WEATHER API CALL HERE
-      // Example: const response = await axios.get(`https://api.google.com/weather?location=${location}&key=${GOOGLE_WEATHER_API_KEY}`);
+      // Example: 
+      // const response = await axios.get(`https://api.google.com/weather?location=${location}&key=${GOOGLE_WEATHER_API_KEY}`);
 
       return {
         temperature: 25,
