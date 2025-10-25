@@ -39,13 +39,44 @@
               <li><router-link to="/activities/planner" class="dropdown-item">Planner</router-link></li>
             </ul>
           </li>
+          <li class="nav-item" v-if="!user">
+            <router-link to="/auth" class="nav-link">Sign In</router-link>
+          </li>
+          <li class="nav-item dropdown" v-if="user">
+            <a
+              class="nav-link dropdown-toggle"
+              href="#"
+              id="userDropdown"
+              role="button"
+              data-bs-toggle="dropdown"
+            >
+              {{ user.email }}
+            </a>
+            <ul class="dropdown-menu" aria-labelledby="userDropdown">
+              <li><button @click="handleSignOut" class="dropdown-item">Sign Out</button></li>
+            </ul>
+          </li>
         </ul>
       </div>
     </div>
   </nav>
 </template>
 
-<script setup lang="ts">
+<script setup>
+import { useAuth } from '../services/authService.js';
+import { useRouter } from 'vue-router';
+
+const { user, signOut } = useAuth();
+const router = useRouter();
+
+const handleSignOut = async () => {
+  try {
+    await signOut();
+    router.push('/');
+  } catch (error) {
+    console.error('Error signing out:', error);
+  }
+};
 </script>
 
 <style scoped>

@@ -48,16 +48,16 @@
   </div>
 </template>
 
-<script setup lang="ts">
+<script setup>
 import { ref, computed, onMounted } from 'vue';
-import { weeklyPlanService } from '../services/weeklyPlanService';
-import { supabase } from '../lib/supabase';
+import { weeklyPlanService } from '../services/weeklyPlanService.js';
+import { supabase } from '../lib/supabase.js';
 import ActivityCard from '../components/ActivityCard.vue';
 
 const currentWeekOffset = ref(0);
-const weekDays = ref<any[]>([]);
+const weekDays = ref([]);
 
-const getWeekStart = (offset: number = 0) => {
+const getWeekStart = (offset = 0) => {
   const today = new Date();
   const day = today.getDay();
   const diff = day === 0 ? -6 : 1 - day;
@@ -128,7 +128,7 @@ const loadWeeklyPlan = async () => {
   });
 };
 
-const navigateWeek = (direction: number) => {
+const navigateWeek = (direction) => {
   currentWeekOffset.value += direction;
   loadWeeklyPlan();
 };

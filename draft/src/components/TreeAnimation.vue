@@ -53,15 +53,13 @@
   </div>
 </template>
 
-<script setup lang="ts">
+<script setup>
 import { computed } from 'vue';
 
 const props = withDefaults(
-  defineProps<{
-    growthPercentage: number;
-    treeColor?: string;
-  }>(),
+  defineProps(),
   {
+    growthPercentage: 0,
     treeColor: '#ADC178'
   }
 );

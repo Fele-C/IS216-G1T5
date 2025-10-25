@@ -144,20 +144,20 @@
   </div>
 </template>
 
-<script setup lang="ts">
+<script setup>
 import { ref, computed, onMounted } from 'vue';
-import { activityService } from '../services/activityService';
-import { treeService, type TreeLog } from '../services/treeService';
-import { userService } from '../services/userService';
-import { supabase } from '../lib/supabase';
+import { activityService } from '../services/activityService.js';
+import { treeService } from '../services/treeService.js';
+import { userService } from '../services/userService.js';
+import { supabase } from '../lib/supabase.js';
 import TreeAnimation from '../components/TreeAnimation.vue';
 import ProgressBar from '../components/ProgressBar.vue';
 
 const weeklyGoal = ref(7000);
 const totalWeeklyCalories = ref(0);
-const weekDays = ref<any[]>([]);
-const treeCollection = ref<TreeLog[]>([]);
-const selectedTree = ref<TreeLog | null>(null);
+const weekDays = ref([]);
+const treeCollection = ref([]);
+const selectedTree = ref(null);
 const isTreeSaved = ref(false);
 const treeColor = ref('#ADC178');
 
@@ -267,7 +267,7 @@ const saveTree = async () => {
   const size = weeklyGrowthPercentage.value < 40 ? 'small' :
                weeklyGrowthPercentage.value < 80 ? 'medium' : 'large';
 
-  const treeData: Omit<TreeLog, 'id' | 'created_at'> = {
+  const treeData = {
     user_id: authUser.user.id,
     tree_name: `Week of ${weekStartFormatted.value}`,
     week_start_date: weekStartStr,
@@ -294,7 +294,7 @@ const loadTreeCollection = async () => {
   treeCollection.value = await treeService.getAllTrees(authUser.user.id);
 };
 
-const formatTreeWeek = (weekStartDate: string) => {
+const formatTreeWeek = (weekStartDate) => {
   const date = new Date(weekStartDate);
   return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 };

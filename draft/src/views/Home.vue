@@ -100,10 +100,10 @@
   </div>
 </template>
 
-<script setup lang="ts">
+<script setup>
 import { ref, computed, onMounted } from 'vue';
-import { userService } from '../services/userService';
-import { apiService } from '../services/apiService';
+import { userService } from '../services/userService.js';
+import { apiService } from '../services/apiService.js';
 
 const userName = ref('User');
 const userLocation = ref('');
@@ -114,8 +114,8 @@ const weather = ref({
   condition: 'Sunny',
   isOutdoorSafe: true
 });
-const recommendedActivities = ref<any[]>([]);
-const nearbyPlaces = ref<any[]>([]);
+const recommendedActivities = ref([]);
+const nearbyPlaces = ref([]);
 
 const greeting = computed(() => {
   const hour = new Date().getHours();

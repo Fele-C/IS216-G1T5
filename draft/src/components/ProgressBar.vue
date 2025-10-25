@@ -18,18 +18,15 @@
   </div>
 </template>
 
-<script setup lang="ts">
+<script setup>
 import { computed } from 'vue';
 
 const props = withDefaults(
-  defineProps<{
-    label: string;
-    currentValue: number;
-    maxValue: number;
-    color?: string;
-    showPercentage?: boolean;
-  }>(),
+  defineProps(),
   {
+    label: '',
+    currentValue: 0,
+    maxValue: 100,
     color: '#FFA69E',
     showPercentage: true
   }

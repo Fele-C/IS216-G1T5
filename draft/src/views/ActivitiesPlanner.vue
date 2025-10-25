@@ -175,29 +175,29 @@
   </div>
 </template>
 
-<script setup lang="ts">
+<script setup>
 import { ref, computed, onMounted } from 'vue';
-import { weeklyPlanService, type WeeklyPlan } from '../services/weeklyPlanService';
-import { userService } from '../services/userService';
-import { apiService } from '../services/apiService';
-import { supabase } from '../lib/supabase';
+import { weeklyPlanService } from '../services/weeklyPlanService.js';
+import { userService } from '../services/userService.js';
+import { apiService } from '../services/apiService.js';
+import { supabase } from '../lib/supabase.js';
 
 const daysOfWeek = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-const selectedDays = ref<number[]>([]);
+const selectedDays = ref([]);
 const activityType = ref('');
 const weeklyCalorieGoal = ref(3500);
 const userLocation = ref('');
 const isGenerating = ref(false);
-const generatedPlan = ref<Omit<WeeklyPlan, 'id' | 'created_at' | 'user_id' | 'week_start_date'>[]>([]);
-const recommendedActivities = ref<any[]>([]);
+const generatedPlan = ref([]);
+const recommendedActivities = ref([]);
 const showRecommendedActivities = ref(false);
-const selectedPlanForLocations = ref<any>(null);
+const selectedPlanForLocations = ref(null);
 
 const totalPlanCalories = computed(() => {
   return generatedPlan.value.reduce((sum, plan) => sum + plan.estimated_calories, 0);
 });
 
-const toggleDay = (dayIndex: number) => {
+const toggleDay = (dayIndex) => {
   const index = selectedDays.value.indexOf(dayIndex);
   if (index > -1) {
     selectedDays.value.splice(index, 1);
@@ -207,7 +207,7 @@ const toggleDay = (dayIndex: number) => {
   selectedDays.value.sort((a, b) => a - b);
 };
 
-const getDayName = (dayNumber: number) => {
+const getDayName = (dayNumber) => {
   return daysOfWeek[dayNumber - 1] || 'Unknown';
 };
 
@@ -237,7 +237,7 @@ const generatePlan = async () => {
   recommendedActivities.value = activities;
   showRecommendedActivities.value = true;
 
-  const plan: Omit<WeeklyPlan, 'id' | 'created_at' | 'user_id' | 'week_start_date'>[] = [];
+  const plan = [];
 
   for (const dayIndex of selectedDays.value) {
     const activity = activities[dayIndex % activities.length];
@@ -284,7 +284,7 @@ const savePlan = async () => {
   }
 };
 
-const viewLocations = (plan: any) => {
+const viewLocations = (plan) => {
   selectedPlanForLocations.value = plan;
 };
 

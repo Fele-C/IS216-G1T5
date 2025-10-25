@@ -154,15 +154,15 @@
   </div>
 </template>
 
-<script setup lang="ts">
+<script setup>
 import { ref, computed, onMounted } from 'vue';
-import { userService, type User } from '../services/userService';
-import { apiService } from '../services/apiService';
-import { activityService } from '../services/activityService';
-import { supabase } from '../lib/supabase';
+import { userService } from '../services/userService.js';
+import { apiService } from '../services/apiService.js';
+import { activityService } from '../services/activityService.js';
+import { supabase } from '../lib/supabase.js';
 import ProgressBar from '../components/ProgressBar.vue';
 
-const profile = ref<Partial<User>>({
+const profile = ref({
   name: '',
   age_group: '',
   weight: 0,
@@ -173,8 +173,8 @@ const profile = ref<Partial<User>>({
   recommended_calories: 2000
 });
 
-const bmiData = ref<{ bmi: number; category: string }>({ bmi: 0, category: '' });
-const progressView = ref<'overall' | 'monthly'>('overall');
+const bmiData = ref({ bmi: 0, category: '' });
+const progressView = ref('overall');
 const isNewProfile = ref(true);
 const overallProgress = ref({
   totalCalories: 0,
@@ -242,7 +242,7 @@ const saveProfile = async () => {
   }
 
   if (isNewProfile.value) {
-    const result = await userService.createUser(profile.value as any);
+    const result = await userService.createUser(profile.value);
     if (result) {
       isNewProfile.value = false;
       alert('Profile created successfully!');

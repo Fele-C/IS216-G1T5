@@ -23,14 +23,10 @@
   </div>
 </template>
 
-<script setup lang="ts">
+<script setup>
 import { ref, computed } from 'vue';
-import type { WeeklyPlan } from '../services/weeklyPlanService';
 
-const props = defineProps<{
-  dayName: string;
-  activity: WeeklyPlan | null;
-}>();
+const props = defineProps();
 
 const showDetails = ref(false);
 const hasActivity = computed(() => props.activity !== null);

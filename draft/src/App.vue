@@ -1,5 +1,13 @@
-<script setup lang="ts">
-import Navbar from './components/Navbar.vue'
+<script setup>
+import { onMounted } from 'vue';
+import Navbar from './components/NavBar.vue';
+import { useAuth } from './services/authService.js';
+
+const { initAuth } = useAuth();
+
+onMounted(() => {
+  initAuth();
+});
 </script>
 
 <template>

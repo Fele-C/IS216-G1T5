@@ -44,7 +44,7 @@
                   <div class="activity-header">
                     <h4>{{ activity.activity_name }}</h4>
                     <button
-                      @click="deleteActivity(activity.id!)"
+                      @click="deleteActivity(activity.id)"
                       class="btn-delete"
                       title="Delete activity"
                     >
@@ -145,16 +145,16 @@
   </div>
 </template>
 
-<script setup lang="ts">
+<script setup>
 import { ref, computed, onMounted } from 'vue';
-import { activityService, type ActivityLog } from '../services/activityService';
-import { userService } from '../services/userService';
-import { apiService } from '../services/apiService';
-import { supabase } from '../lib/supabase';
+import { activityService } from '../services/activityService.js';
+import { userService } from '../services/userService.js';
+import { apiService } from '../services/apiService.js';
+import { supabase } from '../lib/supabase.js';
 import WaterJar from '../components/WaterJar.vue';
 import ProgressBar from '../components/ProgressBar.vue';
 
-const activities = ref<ActivityLog[]>([]);
+const activities = ref([]);
 const dailyGoal = ref(2000);
 const showAddActivity = ref(false);
 const newActivity = ref({
@@ -188,7 +188,7 @@ const loadActivities = async () => {
   activities.value = await activityService.getActivitiesByDate(authUser.user.id, todayStr);
 };
 
-const updateActivityProgress = async (activity: ActivityLog) => {
+const updateActivityProgress = async (activity) => {
   if (activity.id) {
     await activityService.updateActivity(activity.id, {
       completion_percentage: activity.completion_percentage
@@ -210,7 +210,7 @@ const addActivity = async () => {
     user?.weight || 70
   );
 
-  const activityData: Omit<ActivityLog, 'id' | 'created_at'> = {
+  const activityData = {
     user_id: authUser.user.id,
     activity_name: newActivity.value.activity_name,
     activity_date: today.toISOString().split('T')[0],
@@ -234,7 +234,7 @@ const addActivity = async () => {
   }
 };
 
-const deleteActivity = async (activityId: string) => {
+const deleteActivity = async (activityId) => {
   if (confirm('Are you sure you want to delete this activity?')) {
     const success = await activityService.deleteActivity(activityId);
     if (success) {
