@@ -163,7 +163,7 @@ onMounted(async () => {
 
 .hero-section {
   background: linear-gradient(135deg, #B8F2E6 0%, #AED9E0 100%);
-  min-height: 60vh;
+  min-height: 45vh;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -171,37 +171,37 @@ onMounted(async () => {
 }
 
 .greeting h1 {
-  font-size: 3rem;
+  font-size: 2rem;
   font-weight: 700;
   color: #5E6472;
-  margin-bottom: 1rem;
+  margin-bottom: 0.75rem;
 }
 
 .greeting h2 {
-  font-size: 2rem;
+  font-size: 1.5rem;
   color: #FFA69E;
   font-weight: 600;
 }
 
 .scroll-prompt {
-  margin-top: 3rem;
+  margin-top: 2rem;
   cursor: pointer;
   transition: transform 0.3s ease;
 }
 
 .scroll-prompt:hover {
-  transform: translateY(5px);
+  transform: translateY(3px);
 }
 
 .scroll-prompt p {
-  font-size: 1.5rem;
+  font-size: 1.1rem;
   color: #5E6472;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.4rem;
   font-weight: 500;
 }
 
 .arrow-down {
-  font-size: 2rem;
+  font-size: 1.5rem;
   color: #FFA69E;
   animation: bounce 2s infinite;
 }
@@ -219,33 +219,34 @@ onMounted(async () => {
 }
 
 .dashboard-section {
-  padding: 4rem 0;
+  padding: 2rem 0;
   background-color: #FAF3DD;
 }
 
 .dashboard-section h2 {
   text-align: center;
-  font-size: 2.5rem;
+  font-size: 1.75rem;
   font-weight: 700;
   color: #5E6472;
-  margin-bottom: 2rem;
+  margin-bottom: 1.25rem;
 }
 
 .card {
   border: none;
-  border-radius: 15px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   transition: transform 0.3s ease;
 }
 
 .card:hover {
-  transform: translateY(-5px);
+  transform: translateY(-3px);
 }
 
 .card-body h3 {
   color: #5E6472;
   font-weight: 700;
-  margin-bottom: 1.5rem;
+  font-size: 1.1rem;
+  margin-bottom: 1rem;
 }
 
 .weather-card {
@@ -255,17 +256,18 @@ onMounted(async () => {
 .weather-info {
   display: flex;
   align-items: center;
-  gap: 2rem;
+  gap: 1.5rem;
 }
 
 .weather-icon {
-  font-size: 4rem;
+  font-size: 3rem;
 }
 
 .weather-details p {
-  margin: 0.5rem 0;
+  margin: 0.35rem 0;
   color: #5E6472;
   font-weight: 500;
+  font-size: 0.9rem;
 }
 
 .recommendations-card {
@@ -275,15 +277,16 @@ onMounted(async () => {
 .activity-list {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 0.65rem;
 }
 
 .activity-item {
   display: flex;
   justify-content: space-between;
-  padding: 0.75rem;
+  padding: 0.6rem;
   background-color: white;
-  border-radius: 8px;
+  border-radius: 6px;
+  font-size: 0.9rem;
   transition: background-color 0.3s ease;
 }
 
@@ -307,17 +310,21 @@ onMounted(async () => {
 
 .location-input-group {
   display: flex;
-  gap: 1rem;
+  gap: 0.75rem;
 }
 
 .location-input-group input {
   flex: 1;
+  font-size: 0.9rem;
+  padding: 0.5rem;
 }
 
 .btn-primary {
   background-color: #FFA69E;
   border: none;
   font-weight: 600;
+  font-size: 0.9rem;
+  padding: 0.5rem 1rem;
   transition: background-color 0.3s ease;
 }
 
@@ -328,44 +335,46 @@ onMounted(async () => {
 .places-list {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 0.65rem;
 }
 
 .place-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1rem;
+  padding: 0.75rem;
   background-color: #FAF3DD;
-  border-radius: 8px;
+  border-radius: 6px;
   transition: transform 0.3s ease;
 }
 
 .place-item:hover {
-  transform: translateX(5px);
+  transform: translateX(3px);
 }
 
 .place-info h4 {
   margin: 0;
   color: #5E6472;
-  font-size: 1.2rem;
+  font-size: 1rem;
 }
 
 .place-info p {
-  margin: 0.25rem 0 0;
+  margin: 0.2rem 0 0;
   color: #888;
+  font-size: 0.85rem;
 }
 
 .place-details {
   display: flex;
-  gap: 0.5rem;
+  gap: 0.4rem;
 }
 
 .badge {
   background-color: #AED9E0;
   color: #5E6472;
-  padding: 0.4rem 0.8rem;
-  border-radius: 12px;
+  padding: 0.3rem 0.6rem;
+  border-radius: 10px;
   font-weight: 500;
+  font-size: 0.85rem;
 }
 </style>

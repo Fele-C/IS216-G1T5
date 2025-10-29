@@ -51,37 +51,47 @@
 
           <div class="form-row">
             <div class="form-group">
-              <label for="ageGroup">Age Group</label>
-              <select
-                id="ageGroup"
-                v-model="formData.ageGroup"
+              <label for="age">Age</label>
+              <input
+                type="number"
+                id="age"
+                v-model.number="formData.age"
                 :required="!isLogin"
                 :disabled="loading"
-              >
-                <option value="">Select age group</option>
-                <option value="18-25">18-25</option>
-                <option value="26-35">26-35</option>
-                <option value="36-45">36-45</option>
-                <option value="46-55">46-55</option>
-                <option value="56-65">56-65</option>
-                <option value="65+">65+</option>
-              </select>
+                placeholder="25"
+                min="13"
+                max="120"
+              />
             </div>
 
             <div class="form-group">
-              <label for="goal">Fitness Goal</label>
+              <label for="gender">Gender</label>
               <select
-                id="goal"
-                v-model="formData.goal"
+                id="gender"
+                v-model="formData.gender"
                 :required="!isLogin"
                 :disabled="loading"
               >
-                <option value="">Select your goal</option>
-                <option value="maintain">Maintain current weight</option>
-                <option value="lose">Lose weight</option>
-                <option value="gain">Gain weight</option>
+                <option value="">Select gender</option>
+                <option value="male">Male</option>
+                <option value="female">Female</option>
               </select>
             </div>
+          </div>
+
+          <div class="form-group">
+            <label for="goal">Fitness Goal</label>
+            <select
+              id="goal"
+              v-model="formData.goal"
+              :required="!isLogin"
+              :disabled="loading"
+            >
+              <option value="">Select your goal</option>
+              <option value="maintain">Maintain current weight</option>
+              <option value="lose">Lose weight</option>
+              <option value="gain">Gain weight</option>
+            </select>
           </div>
 
           <div class="form-row">
@@ -167,6 +177,7 @@
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuth } from '../services/authService.js';
+import { apiService } from '../services/apiService.js';
 
 const router = useRouter();
 const { signUp, signIn, loading, error } = useAuth();
@@ -178,7 +189,8 @@ const formData = ref({
   email: '',
   password: '',
   name: '',
-  ageGroup: '',
+  age: null,
+  gender: '',
   weight: null,
   height: null,
   goal: '',
@@ -194,7 +206,8 @@ const toggleMode = () => {
       email: '',
       password: '',
       name: '',
-      ageGroup: '',
+      age: null,
+      gender: '',
       weight: null,
       height: null,
       goal: '',
@@ -210,22 +223,36 @@ const handleSubmit = async () => {
     if (isLogin.value) {
       await signIn(formData.value.email, formData.value.password);
     } else {
-      // Calculate BMI for signup
-      const bmi = formData.value.weight && formData.value.height 
-        ? formData.value.weight / Math.pow(formData.value.height / 100, 2)
-        : 0;
-      
-      // Calculate recommended calories (basic formula)
-      const recommendedCalories = formData.value.weight && formData.value.height
-        ? Math.round((formData.value.weight * 10) + (formData.value.height * 6.25) - (25 * 25) + 5)
-        : 2000;
+      // Calculate BMI using API
+      const result = await apiService.calculateBMI(
+        formData.value.weight,
+        formData.value.height,
+        formData.value.age,
+        formData.value.gender
+      );
+
+      const bmi = result ? result.bmi : 0;
+      let recommendedCalories = 2000;
+
+      if (result && result.bmr && result.bmr > 0) {
+        // Use BMR from API
+        if (formData.value.goal === 'lose') {
+          recommendedCalories = Math.round(result.bmr * 1.2 - 500);
+        } else if (formData.value.goal === 'gain') {
+          recommendedCalories = Math.round(result.bmr * 1.2 + 500);
+        } else {
+          recommendedCalories = Math.round(result.bmr * 1.2);
+        }
+        recommendedCalories = Math.max(1200, recommendedCalories);
+      }
 
       await signUp({
         email: formData.value.email,
         password: formData.value.password,
         profile: {
           name: formData.value.name,
-          ageGroup: formData.value.ageGroup,
+          age: formData.value.age || 0,
+          gender: formData.value.gender,
           weight: formData.value.weight || 0,
           height: formData.value.height || 0,
           bmi: Math.round(bmi * 100) / 100,

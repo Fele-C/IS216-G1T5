@@ -39,6 +39,8 @@ export const userService = {
   },
 
   async updateUser(userId, updates) {
+    console.log('Updating user:', userId, 'with data:', updates);
+    
     const { data, error } = await supabase
       .from('users')
       .update({ ...updates, updated_at: new Date().toISOString() })
@@ -48,9 +50,11 @@ export const userService = {
 
     if (error) {
       console.error('Error updating user:', error);
+      console.error('Error details:', error.message, error.code, error.details);
       return null;
     }
 
+    console.log('Update successful:', data);
     return data;
   },
 

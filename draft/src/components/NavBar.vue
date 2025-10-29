@@ -16,9 +16,6 @@
             <router-link to="/" class="nav-link">Home</router-link>
           </li>
           <li class="nav-item">
-            <router-link to="/profile" class="nav-link">Profile</router-link>
-          </li>
-          <li class="nav-item">
             <router-link to="/daily-tracker" class="nav-link">Daily Tracker</router-link>
           </li>
           <li class="nav-item">
@@ -50,9 +47,10 @@
               role="button"
               data-bs-toggle="dropdown"
             >
-              {{ user.email }}
+              {{ userName || user.email }}
             </a>
             <ul class="dropdown-menu" aria-labelledby="userDropdown">
+              <li><router-link to="/profile" class="dropdown-item">Profile</router-link></li>
               <li><button @click="handleSignOut" class="dropdown-item">Sign Out</button></li>
             </ul>
           </li>
@@ -63,15 +61,45 @@
 </template>
 
 <script setup>
+import { ref, watch, onMounted } from 'vue';
 import { useAuth } from '../services/authService.js';
+import { userService } from '../services/userService.js';
+import { supabase } from '../lib/supabase.js';
 import { useRouter } from 'vue-router';
 
 const { user, signOut } = useAuth();
 const router = useRouter();
+const userName = ref('');
+
+// Function to load user profile
+const loadUserProfile = async () => {
+  if (user.value) {
+    const { data } = await supabase.from('users').select('*').eq('id', user.value.id).maybeSingle();
+    
+    if (data && data.name) {
+      userName.value = data.name;
+    }
+  }
+};
+
+// Load profile on mount
+onMounted(async () => {
+  await loadUserProfile();
+});
+
+// Watch for user changes (login/logout)
+watch(user, async (newUser) => {
+  if (newUser) {
+    await loadUserProfile();
+  } else {
+    userName.value = '';
+  }
+});
 
 const handleSignOut = async () => {
   try {
     await signOut();
+    userName.value = '';
     router.push('/');
   } catch (error) {
     console.error('Error signing out:', error);
@@ -83,12 +111,12 @@ const handleSignOut = async () => {
 .custom-navbar {
   background-color: #AED9E0;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  padding: 1rem 0;
+  padding: 0.5rem 0;
 }
 
 .navbar-brand {
   font-weight: 700;
-  font-size: 1.5rem;
+  font-size: 1.25rem;
   color: #5E6472;
   transition: color 0.3s ease;
 }
@@ -100,7 +128,9 @@ const handleSignOut = async () => {
 .nav-link {
   color: #5E6472;
   font-weight: 500;
-  margin: 0 0.5rem;
+  font-size: 0.95rem;
+  margin: 0 0.35rem;
+  padding: 0.4rem 0.6rem;
   transition: color 0.3s ease;
 }
 
@@ -113,10 +143,12 @@ const handleSignOut = async () => {
   background-color: #FAF3DD;
   border: none;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  font-size: 0.9rem;
 }
 
 .dropdown-item {
   color: #5E6472;
+  padding: 0.4rem 1rem;
   transition: background-color 0.3s ease;
 }
 

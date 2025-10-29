@@ -1,7 +1,9 @@
+import axios from 'axios';
+
 // INSERT YOUR API KEYS HERE:
 const GOOGLE_WEATHER_API_KEY = 'AIzaSyDowpr_xuUgYE9czDZ3rNjcZjqxgRkNLVU';
 // const GOOGLE_PLACES_API_KEY = '';
-// const RAPIDAPI_BMI_KEY = '';
+const RAPIDAPI_BMI_KEY = 'cc6fa81db9msh92b2d4cce5184dap1ef0bejsn153aaf0110d9';
 // const API_NINJAS_KEY = '';
 
 export const apiService = {
@@ -43,26 +45,63 @@ export const apiService = {
     }
   },
 
-  async calculateBMI(weight, height) {
+  async calculateBMI(weight, height, age, gender) {
     try {
-      // INSERT RAPIDAPI BMI CALCULATION HERE
-      // Example using RapidAPI BMI Calculator endpoint
-      // const response = await axios.get(`https://bmi-calculator-api.p.rapidapi.com/calculate`, {
-      //   params: { weight_kg: weight, height_cm: height },
-      //   headers: {
-      //     'X-RapidAPI-Key': RAPIDAPI_BMI_KEY,
-      //     'X-RapidAPI-Host': 'bmi-calculator-api.p.rapidapi.com'
-      //   }
-      // });
+      // Map gender to API format ('m' or 'f')
+      let sex = 'm';
+      if (gender === 'female') {
+        sex = 'f';
+      } else if (gender === 'male') {
+        sex = 'm';
+      } else {
+        sex = 'm'; // default to male
+      }
 
+      const options = {
+        method: 'POST',
+        url: 'https://bmi.p.rapidapi.com/v1/bmi',
+        headers: {
+          'x-rapidapi-key': RAPIDAPI_BMI_KEY,
+          'x-rapidapi-host': 'bmi.p.rapidapi.com',
+          'Content-Type': 'application/json'
+        },
+        data: {
+          weight: {
+            value: weight.toString(),
+            unit: 'kg'
+          },
+          height: {
+            value: height.toString(),
+            unit: 'cm'
+          },
+          sex: sex,
+          age: age.toString()
+        }
+      };
+
+      const response = await axios.request(options);
+      console.log('BMI API Response:', response.data);
+      
+      // Extract data from API response
+      const apiData = response.data;
+      
+      return {
+        bmi: parseFloat(apiData.bmi) || 0,
+        bmr: parseFloat(apiData.bmr) || 0,
+        category: apiData.health || 'Unknown',
+        idealWeight: apiData.ideal_weight || null,
+        apiData: apiData
+      };
+    } catch (error) {
+      console.error('Error calling BMI API:', error.response?.data || error.message);
+      // Fallback to local calculation if API fails
       const bmi = weight / Math.pow(height / 100, 2);
       return {
         bmi: parseFloat(bmi.toFixed(2)),
-        category: bmi < 18.5 ? 'Underweight' : bmi < 25 ? 'Normal' : bmi < 30 ? 'Overweight' : 'Obese'
+        bmr: 0,
+        category: bmi < 18.5 ? 'Underweight' : bmi < 25 ? 'Normal' : bmi < 30 ? 'Overweight' : 'Obese',
+        idealWeight: null
       };
-    } catch (error) {
-      console.error('Error calculating BMI:', error);
-      return null;
     }
   },
 

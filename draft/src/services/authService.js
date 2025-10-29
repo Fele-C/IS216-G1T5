@@ -40,7 +40,8 @@ export const useAuth = () => {
             {
               id: authData.user.id,
               name: signUpData.profile.name,
-              age_group: signUpData.profile.ageGroup,
+              age: signUpData.profile.age,
+              gender: signUpData.profile.gender,
               weight: signUpData.profile.weight,
               height: signUpData.profile.height,
               bmi: signUpData.profile.bmi,
