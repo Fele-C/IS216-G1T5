@@ -13,10 +13,12 @@ export const apiService = {
       // Example: 
       // const response = await axios.get(`https://api.google.com/weather?location=${location}&key=${GOOGLE_WEATHER_API_KEY}`);
 
+      const response = await axios.get(`https://weather.googleapis.com/v1/currentConditions:lookup?key=${GOOGLE_WEATHER_API_KEY}&location.latitude=1.3521&location.longitude=103.8198`);
       return {
-        temperature: 25,
-        uvIndex: 5,
-        condition: 'Sunny',
+        temperature: response.data.temperature.degrees,
+        feelsLike: response.data.feelsLikeTemperature.degrees,
+        uvIndex: response.data.uvIndex,
+        condition: response.data.weatherCondition.description.text,
         isOutdoorSafe: true
       };
     } catch (error) {

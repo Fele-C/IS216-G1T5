@@ -26,6 +26,7 @@
                   <div class="weather-icon">☀️</div>
                   <div class="weather-details">
                     <p><strong>Temperature:</strong> {{ weather.temperature }}°C</p>
+                    <p><strong>Feels Like:</strong> {{ weather.feelsLike }}°C</p>
                     <p><strong>UV Index:</strong> {{ weather.uvIndex }}</p>
                     <p><strong>Condition:</strong> {{ weather.condition }}</p>
                   </div>
