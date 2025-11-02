@@ -4,7 +4,7 @@ import axios from 'axios';
 const GOOGLE_WEATHER_API_KEY = 'AIzaSyDowpr_xuUgYE9czDZ3rNjcZjqxgRkNLVU';
 const GOOGLE_PLACES_API_KEY = 'AIzaSyCdAB6Z2sTSA41CStyvIQgj5IPa8OiqIFg';
 const RAPIDAPI_BMI_KEY = 'cc6fa81db9msh92b2d4cce5184dap1ef0bejsn153aaf0110d9';
-// const API_NINJAS_KEY = '';
+const API_NINJAS_KEY = 'OAHR8uB9r7FjiHqqmJ/EtA==e5lc9Gi9HXBBRjOi';
 
 export const apiService = {
   async getWeatherData(_location) {
@@ -14,12 +14,41 @@ export const apiService = {
       // const response = await axios.get(`https://api.google.com/weather?location=${location}&key=${GOOGLE_WEATHER_API_KEY}`);
 
       const response = await axios.get(`https://weather.googleapis.com/v1/currentConditions:lookup?key=${GOOGLE_WEATHER_API_KEY}&location.latitude=1.3521&location.longitude=103.8198`);
+      const temperature= response.data.temperature.degrees;
+      const feelsLike = response.data.feelsLikeTemperature.degrees;
+      const uvIndex = response.data.uvIndex;
+      const condition = response.data.weatherCondition.description.text;
+
+      let cautionaryString = "";
+      let isOutdoorSafe = true;
+
+      if(condition.includes("rain") || condition.includes("storm") || condition.includes("thunder") || condition.includes("shower")){
+        cautionaryString = "Wet weather, stay under shelter";
+        isOutdoorSafe = false;
+      }else if(uvIndex > 5 || temperature > 32){
+        cautionaryString = "Dangerous weather, avoid outdoor activities";
+        isOutdoorSafe = false;
+      }else if(uvIndex > 2 || temperature > 27){
+        cautionaryString = "Safe for outdoor activities, but make sure to stay hydrated and apply sunscreen, beware of heatstroke!";
+        isOutdoorSafe = true;
+      }else{
+        cautionaryString = "A great timming to for some outdoor activities!";
+        isOutdoorSafe = true;
+      }
+      
+      
       return {
-        temperature: response.data.temperature.degrees,
-        feelsLike: response.data.feelsLikeTemperature.degrees,
-        uvIndex: response.data.uvIndex,
-        condition: response.data.weatherCondition.description.text,
-        isOutdoorSafe: true
+        // temperature: response.data.temperature.degrees,
+        // feelsLike: response.data.feelsLikeTemperature.degrees,
+        // uvIndex: response.data.uvIndex,
+        // condition: response.data.weatherCondition.description.text,
+        // isOutdoorSafe: true
+
+        temperature,
+        feelsLike,
+        uvIndex,
+        condition,
+        isOutdoorSafe
       };
     } catch (error) {
       console.error('Error fetching weather data:', error);
@@ -120,8 +149,24 @@ export const apiService = {
       //   headers: { 'X-Api-Key': API_NINJAS_KEY }
       // });
 
-      const baseCaloriesPerMinute = 5;
-      return Math.round(baseCaloriesPerMinute * duration * (weight / 70));
+      const response = await axios.get(`https://api.api-ninjas.com/v1/caloriesburned`, {
+      params: {
+        activity: _activity,
+        duration: duration,
+        weight: weight 
+      },
+      headers: { 'X-Api-Key': API_NINJAS_KEY }
+      });
+
+      // const baseCaloriesPerMinute = (response.data[0].calories_per_hour)/60;
+      // return Math.round(baseCaloriesPerMinute * duration * (weight / 70));
+      const calories_burnt = response.data[0].total_calories;
+      const calories_burnt_per_hour = response.data[0].calories_per_hour;
+      return{
+        calories_burnt,
+        calories_burnt_per_hour
+
+      }
     } catch (error) {
       console.error('Error calculating calories burnt:', error);
       return 0;
@@ -140,14 +185,25 @@ export const apiService = {
       { name: 'Hiking', type: 'outdoor', caloriesPerHour: 550, weatherSafe: ['Sunny', 'Cloudy'] }
     ];
 
-    return activities.filter(activity => {
-      if (isOutdoor && activity.type !== 'outdoor') return false;
-      if (!isOutdoor && activity.type !== 'indoor') return false;
-      if (weather && !activity.weatherSafe.includes('All') && !activity.weatherSafe.includes(weather.condition)) {
-        return false;
-      }
-      return true;
-    });
+
+    // return activities.filter(activity => {
+    //   if (isOutdoor && activity.type !== 'outdoor') return false;
+    //   if (!isOutdoor && activity.type !== 'indoor') return false;
+    //   if (weather && !activity.weatherSafe.includes('All') && !activity.weatherSafe.includes(weather.condition)) {
+    //     return false;
+    //   }
+
+    //   if(isOutdoor)
+
+    //   return true;
+    // });
+
+    if(isOutdoor){
+      return activities;
+    }
+    return [];
+
+    
   }
 };
 
