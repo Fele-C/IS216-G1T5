@@ -31,13 +31,13 @@
                 </button>
               </div>
 
-              <div v-if="activities.length === 0" class="no-activities">
+              <div v-if="plan.length === 0" class="no-activities">
                 <p>No activities for today. Add your first activity!</p>
               </div>
 
               <div v-else class="activities-list">
                 <div
-                  v-for="activity in activities"
+                  v-for="activity in plan"
                   :key="activity.id"
                   class="activity-item"
                 >
@@ -54,7 +54,7 @@
 
                   <div class="activity-details">
                     <span class="detail-badge">
-                      <strong>Duration:</strong> {{ activity.duration }} min
+                      <strong>Duration:</strong> {{ activity.duration || 0 }} min
                     </span>
                     <span class="detail-badge">
                       <strong>Location:</strong> {{ activity.location || 'Not specified' }}
@@ -66,23 +66,23 @@
 
                   <div class="progress-section">
                     <label class="slider-label">
-                      Progress: {{ activity.completion_percentage }}%
+                      Progress: {{ activity.completion_percentage || 0 }}%
                     </label>
                     <input
                       type="range"
                       min="0"
                       max="100"
                       v-model.number="activity.completion_percentage"
-                      @input="updateActivityProgress(activity)"
+                      @change="updateActivityProgress(activity)"
                       class="progress-slider"
                     />
                   </div>
 
                   <div class="calories-display">
                     <span class="calories-burnt">
-                      {{ Math.round((activity.calories_burnt * activity.completion_percentage) / 100) }}
+                      {{ Math.round((activity.calories || 0) * (activity.completion_percentage || 0) / 100) }}
                     </span>
-                    <span class="calories-total">/ {{ activity.calories_burnt }} kcal</span>
+                    <span class="calories-total">/ {{ activity.calories }} kcal</span>
                   </div>
                 </div>
               </div>
@@ -98,12 +98,20 @@
         <form @submit.prevent="addActivity">
           <div class="mb-3">
             <label class="form-label">Activity Name</label>
-            <input
+            <select
               v-model="newActivity.activity_name"
-              type="text"
-              class="form-control"
+              class="form-select"
               required
-            />
+            >
+              <option value="" disabled>Select an activity</option>
+              <option 
+                v-for="activity in aList" 
+                :key="activity.id" 
+                :value="activity.name"
+              >
+                {{ activity.name }}
+              </option>
+            </select>
           </div>
 
           <div class="mb-3">
@@ -149,14 +157,19 @@
 import { ref, computed, onMounted } from 'vue';
 import { activityService } from '../services/activityService.js';
 import { userService } from '../services/userService.js';
-import { apiService } from '../services/apiService.js';
+//import { apiService } from '../services/apiService.js';
 import { supabase } from '../lib/supabase.js';
 import WaterJar from '../components/WaterJar.vue';
 import ProgressBar from '../components/ProgressBar.vue';
 
 const activities = ref([]);
+const plan = ref([]);
+const week = ref([]);
+const aList = ref([]);
+const id = ref("");
 const dailyGoal = ref(2000);
 const showAddActivity = ref(false);
+const totalCaloriesBurnt = ref(0);
 const newActivity = ref({
   activity_name: '',
   duration: 30,
@@ -165,6 +178,7 @@ const newActivity = ref({
 });
 
 const today = new Date();
+
 const formattedDate = computed(() => {
   return today.toLocaleDateString('en-US', {
     weekday: 'long',
@@ -174,27 +188,82 @@ const formattedDate = computed(() => {
   });
 });
 
-const totalCaloriesBurnt = computed(() => {
-  return activities.value.reduce((total, activity) => {
-    return total + Math.round((activity.calories_burnt * activity.completion_percentage) / 100);
-  }, 0);
-});
-
 const loadActivities = async () => {
   const { data: authUser } = await supabase.auth.getUser();
   if (!authUser.user) return;
 
+  id.value = authUser.user.id;
+
   const todayStr = today.toISOString().split('T')[0];
-  activities.value = await activityService.getActivitiesByDate(authUser.user.id, todayStr);
+
+  aList.value = await activityService.getActivityList()
+  console.log("Activity List: ", aList.value)
+
+  week.value = await activityService.getActivitiesByWeek(authUser.user.id, todayStr)
+  console.log("User:", authUser.user.id, "Returned", week.value)
+
+  plan.value = await activityService.getActivityPlanByDate(week.value[0].id, todayStr)
+  console.log("Week:", week.value[0].id, "Returned", plan.value)
+
+  activities.value = await activityService.getCompletedActivitiesByDate(authUser.user.id, todayStr);
+  console.log("User:", authUser.user.id, " date:", todayStr, "Returned", activities.value)
+
+  activities.value = activities.value.map(a => ({
+      ...a,
+      percentage: a.percentage ?? 0   // ensures no undefined
+    }));
+
+
+  totalCaloriesBurnt.value = calculateTotalCalories()
+
+  plan.value = plan.value.map(planActivity => {
+    const match = activities.value.find(a => a.activity === planActivity.activity);
+
+    return {
+      ...planActivity,
+      completion_percentage: match ? match.percentage : 0
+    };
+  });
+
 };
 
 const updateActivityProgress = async (activity) => {
   if (activity.id) {
-    await activityService.updateActivity(activity.id, {
-      completion_percentage: activity.completion_percentage
+    const match = activities.value.find(a => a.activity === activity.activity);
+
+    const d = Math.round((activity.duration * activity.completion_percentage) / 100);
+    const c = Math.round((activity.calories * activity.completion_percentage) / 100);
+
+    if (!match) {
+      await activityService.createActivity({
+      date : today.toISOString().split('T')[0],
+      activity : activity.activity,
+      duration : d,
+      calories : c,
+      location : activity.location,
+      outdoor : activity.outdoor,
+      user_id : id.value,
+      percentage : activity.completion_percentage
     });
+    return
+    }
+
+    await activityService.updateActivity(match.id, {
+      duration : d,
+      calories : c,
+      percentage : activity.completion_percentage
+    });
+
+    totalCaloriesBurnt.value = calculateTotalCalories()
   }
 };
+
+const calculateTotalCalories = () => {
+  return activities.value.reduce((total, activity) => {
+     return total + activity.calories;
+   }, 0);
+};
+
 
 const addActivity = async () => {
   const { data: authUser } = await supabase.auth.getUser();
@@ -204,34 +273,26 @@ const addActivity = async () => {
   }
 
   const user = await userService.getCurrentUser();
-  const caloriesBurnt = await apiService.getCaloriesBurnt(
-    newActivity.value.activity_name,
-    newActivity.value.duration,
-    user?.weight || 70
-  );
+  // const caloriesBurnt = await apiService.getCaloriesBurnt(
+  //   newActivity.value.activity_name,
+  //   newActivity.value.duration,
+  //   user?.weight || 70
+  // );
+  const match = aList.value.find(a => a.name === newActivity.value.activity_name);
+  
+  const caloriesBurnt = match.met *3.5 * user.weight / 200 * newActivity.value.duration
 
-  const activityData = {
-    user_id: authUser.user.id,
-    activity_name: newActivity.value.activity_name,
-    activity_date: today.toISOString().split('T')[0],
-    duration: newActivity.value.duration,
-    calories_burnt: caloriesBurnt,
-    location: newActivity.value.location,
-    is_outdoor: newActivity.value.is_outdoor,
-    completion_percentage: 0
-  };
+  await activityService.extraActivity({
+    week : week.value[0].id,
+    date : today.toISOString().split('T')[0],
+    activity : newActivity.value.activity_name,
+    duration : newActivity.value.duration,
+    location : newActivity.value.location,
+    calories : caloriesBurnt,
+    outdoor : newActivity.value.is_outdoor
+  });
 
-  const result = await activityService.createActivity(activityData);
-  if (result) {
-    activities.value.push(result);
-    showAddActivity.value = false;
-    newActivity.value = {
-      activity_name: '',
-      duration: 30,
-      location: '',
-      is_outdoor: false
-    };
-  }
+  await loadActivities();
 };
 
 const deleteActivity = async (activityId) => {

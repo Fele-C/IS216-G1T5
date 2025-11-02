@@ -9,7 +9,7 @@
         class="progress-fill"
         :style="{
           width: `${percentage}%`,
-          backgroundColor: color
+          backgroundColor: barColor
         }"
       >
         <span v-if="showPercentage" class="percentage-text">{{ percentage }}%</span>
@@ -21,20 +21,24 @@
 <script setup>
 import { computed } from 'vue';
 
-const props = withDefaults(
-  defineProps(),
-  {
-    label: '',
-    currentValue: 0,
-    maxValue: 100,
-    color: '#FFA69E',
-    showPercentage: true
-  }
-);
+const props = defineProps({
+  label: String,
+  currentValue: Number,
+  maxValue: Number,
+  color: String,
+  showPercentage: Boolean
+});
 
 const percentage = computed(() => {
   if (props.maxValue === 0) return 0;
   return Math.min(Math.round((props.currentValue / props.maxValue) * 100), 100);
+});
+
+const barColor = computed(() => {
+  if (percentage.value < 25) return '#d9534f';      // red
+  if (percentage.value < 50) return '#f0ad4e';      // orange
+  if (percentage.value < 75) return '#ffd966';      // yellow
+  return '#5cb85c';                                 // green
 });
 </script>
 

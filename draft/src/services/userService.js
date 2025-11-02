@@ -68,4 +68,3 @@ export const userService = {
     return this.getUser(authUser.user.id);
   }
 };
-
