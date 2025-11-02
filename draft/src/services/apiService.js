@@ -2,7 +2,7 @@ import axios from 'axios';
 
 // INSERT YOUR API KEYS HERE:
 const GOOGLE_WEATHER_API_KEY = 'AIzaSyDowpr_xuUgYE9czDZ3rNjcZjqxgRkNLVU';
-// const GOOGLE_PLACES_API_KEY = '';
+const GOOGLE_PLACES_API_KEY = 'AIzaSyCdAB6Z2sTSA41CStyvIQgj5IPa8OiqIFg';
 const RAPIDAPI_BMI_KEY = 'cc6fa81db9msh92b2d4cce5184dap1ef0bejsn153aaf0110d9';
 // const API_NINJAS_KEY = '';
 
@@ -13,10 +13,12 @@ export const apiService = {
       // Example: 
       // const response = await axios.get(`https://api.google.com/weather?location=${location}&key=${GOOGLE_WEATHER_API_KEY}`);
 
+      const response = await axios.get(`https://weather.googleapis.com/v1/currentConditions:lookup?key=${GOOGLE_WEATHER_API_KEY}&location.latitude=1.3521&location.longitude=103.8198`);
       return {
-        temperature: 25,
-        uvIndex: 5,
-        condition: 'Sunny',
+        temperature: response.data.temperature.degrees,
+        feelsLike: response.data.feelsLikeTemperature.degrees,
+        uvIndex: response.data.uvIndex,
+        condition: response.data.weatherCondition.description.text,
         isOutdoorSafe: true
       };
     } catch (error) {
@@ -25,25 +27,30 @@ export const apiService = {
     }
   },
 
-  async getNearbyPlaces(_location, _maxDistance, _activityType) {
-    try {
-      // INSERT GOOGLE PLACES API CALL HERE
-      // Example: const response = await axios.get(`https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${location}&radius=${maxDistance}&type=${activityType}&key=${GOOGLE_PLACES_API_KEY}`);
+  
 
-      return [
-        {
-          name: 'Central Park',
-          location: 'Downtown',
-          price: '$$',
-          crowdLevel: 'Medium',
-          distance: 2.5
-        }
-      ];
+  async getNearbyPlaces(lat, lng, radiusKm = 5, type = 'park') {
+    try {
+      const response = await axios.get('http://localhost:3000/api/nearby-places', {
+        params: {
+          lat,
+          lng,
+          radius: radiusKm * 1000,
+          type,
+        },
+      });
+
+      return response.data || [];
     } catch (error) {
       console.error('Error fetching nearby places:', error);
       return [];
     }
   },
+
+
+  
+
+
 
   async calculateBMI(weight, height, age, gender) {
     try {

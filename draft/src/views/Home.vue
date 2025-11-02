@@ -26,6 +26,7 @@
                   <div class="weather-icon">☀️</div>
                   <div class="weather-details">
                     <p><strong>Temperature:</strong> {{ weather.temperature }}°C</p>
+                    <p><strong>Feels Like:</strong> {{ weather.feelsLike }}°C</p>
                     <p><strong>UV Index:</strong> {{ weather.uvIndex }}</p>
                     <p><strong>Condition:</strong> {{ weather.condition }}</p>
                   </div>
@@ -87,7 +88,7 @@
                     <div class="place-details">
                       <span class="badge">{{ place.price }}</span>
                       <span class="badge">{{ place.crowdLevel }}</span>
-                      <span class="badge">{{ place.distance }} km</span>
+                      <span class="badge">{{ place.distanceKm }} km</span>
                     </div>
                   </div>
                 </div>
@@ -129,17 +130,52 @@ const scrollToDashboard = () => {
   dashboard?.scrollIntoView({ behavior: 'smooth' });
 };
 
+
+
+import axios from 'axios';
+
+const GOOGLE_PLACES_API_KEY = 'AIzaSyCdAB6Z2sTSA41CStyvIQgj5IPa8OiqIFg';
+
+async function getCoordinatesFromAddress(address) {
+  try {
+    const response = await axios.get(`https://maps.googleapis.com/maps/api/geocode/json`, {
+      params: {
+        address: address,
+        key: GOOGLE_PLACES_API_KEY
+      }
+    });
+
+    if (!response.data.results.length) {
+      return null;
+    }
+
+    return response.data.results[0].geometry.location;
+  } catch (error) {
+    console.error('Error fetching coordinates:', error);
+    return null;
+  }
+}
+
 const fetchNearbyPlaces = async () => {
   if (!userLocation.value) {
     alert('Please enter your location');
     return;
   }
+
+  const coords = await getCoordinatesFromAddress(userLocation.value);
+  if (!coords) {
+    alert('Could not find location coordinates');
+    return;
+  }
+
   nearbyPlaces.value = await apiService.getNearbyPlaces(
-    userLocation.value,
+    coords.lat,
+    coords.lng,
     maxDistance.value,
     'park'
   );
 };
+
 
 onMounted(async () => {
   const user = await userService.getCurrentUser();
