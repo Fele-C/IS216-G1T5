@@ -1,7 +1,9 @@
 <template>
   <nav class="navbar navbar-expand-lg custom-navbar">
     <div class="container-fluid">
-      <router-link to="/" class="navbar-brand">HealthTracker</router-link>
+      <router-link to="/" class="navbar-brand">
+        <img src="/logofull.png" alt="HealthTracker" style="height: 40px;" />
+      </router-link>
       <button
         class="navbar-toggler"
         type="button"
