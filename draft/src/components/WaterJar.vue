@@ -46,7 +46,10 @@
 <script setup>
 import { computed } from 'vue';
 
-const props = defineProps();
+const props = defineProps({
+  currentCalories: Number,
+  goalCalories: Number
+});
 
 const percentage = computed(() => {
   if (props.goalCalories === 0) return 0;

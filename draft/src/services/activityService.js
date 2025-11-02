@@ -1,13 +1,13 @@
 import { supabase } from '../lib/supabase';
 
 export const activityService = {
-  async getActivitiesByDate(userId, date) {
+  async getCompletedActivitiesByDate(userId, date) {
     const { data, error } = await supabase
-      .from('activity_logs')
+      .from('activity_log')
       .select('*')
       .eq('user_id', userId)
-      .eq('activity_date', date)
-      .order('created_at', { ascending: true });
+      .eq('date', date)
+      .order('date', { ascending: true });
 
     if (error) {
       console.error('Error fetching activities:', error);
@@ -17,17 +17,29 @@ export const activityService = {
     return data || [];
   },
 
-  async getActivitiesByWeek(userId, weekStart) {
-    const weekEnd = new Date(weekStart);
-    weekEnd.setDate(weekEnd.getDate() + 6);
-
+  async getActivityPlanByDate(week, today) {
     const { data, error } = await supabase
-      .from('activity_logs')
+      .from('daily_activity')
+      .select('*')
+      .eq('week', week)
+      .eq('date', today);
+
+    if (error) {
+      console.error('Error fetching activities:', error);
+      return [];
+    }
+
+    return data || [];
+  },
+
+  async getActivitiesByWeek(userId, today) {
+  
+    const { data, error } = await supabase
+      .from('weekly_plan')
       .select('*')
       .eq('user_id', userId)
-      .gte('activity_date', weekStart)
-      .lte('activity_date', weekEnd.toISOString().split('T')[0])
-      .order('activity_date', { ascending: true });
+      .lte('start_date', today)
+      .gte('end_date', today); // checks date falls within the week
 
     if (error) {
       console.error('Error fetching weekly activities:', error);
@@ -37,9 +49,25 @@ export const activityService = {
     return data || [];
   },
 
+  async extraActivity(activity) {
+    const { data, error } = await supabase
+      .from('daily_activity')
+      .insert([activity])
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error adding activity:', error);
+      console.log('Entry', activity)
+      return null;
+    }
+
+    return data;
+  },
+
   async createActivity(activity) {
     const { data, error } = await supabase
-      .from('activity_logs')
+      .from('activity_log')
       .insert([activity])
       .select()
       .single();
@@ -54,7 +82,7 @@ export const activityService = {
 
   async updateActivity(activityId, updates) {
     const { data, error } = await supabase
-      .from('activity_logs')
+      .from('activity_log')
       .update(updates)
       .eq('id', activityId)
       .select()
@@ -66,6 +94,19 @@ export const activityService = {
     }
 
     return data;
+  },
+
+  async getActivityList() {
+    const {data, error} = await supabase
+      .from ('activity_list')
+      .select('*');
+
+    if (error) {
+      console.error('Error fetching activity list', error);
+      return [];
+    }
+
+    return data || [];
   },
 
   async deleteActivity(activityId) {
@@ -82,4 +123,3 @@ export const activityService = {
     return true;
   }
 };
-
