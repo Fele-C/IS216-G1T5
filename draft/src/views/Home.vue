@@ -195,8 +195,16 @@ const fetchNearbyPlaces = async () => {
     alert('Please enter your location');
     return;
   }
+
+  const coords = await getCoordinatesFromAddress(userLocation.value);
+  if (!coords) {
+    alert('Could not find location coordinates');
+    return;
+  }
+
   nearbyPlaces.value = await apiService.getNearbyPlaces(
-    userLocation.value,
+    coords.lat,
+    coords.lng,
     maxDistance.value,
     'park'
   );
