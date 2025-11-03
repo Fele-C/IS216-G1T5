@@ -1,12 +1,31 @@
 <template>
   <div class="home-page">
-    <section class="hero-section">
+    <section class="hero-section" @click="scrollToDashboard">
+      <!-- Background Image -->
+      <transition name="fade" mode="out-in">
+        <div
+          class="hero-bg"
+          :key="currentImage"
+          :style="{ backgroundImage: `url(${images[currentImage]})` }"
+        ></div>
+      </transition>
+
       <div class="container">
+        <!-- Greeting -->
         <div class="greeting">
           <h1>{{ greeting }}</h1>
           <h2>Welcome, {{ userName }}</h2>
         </div>
-        <div class="scroll-prompt" @click="scrollToDashboard">
+
+        <!-- Info bar: time, weather, location -->
+        <div class="info-bar">
+          <span>⏰ {{ currentTime }}</span>
+          <span>☀️ {{ weather.condition }}, {{ weather.temperature }}°C</span>
+          <span>📍 {{ userLocation || 'Unknown' }}</span>
+        </div>
+
+        <!-- Scroll prompt -->
+        <div class="scroll-prompt">
           <p>What do you want to do today?</p>
           <span class="arrow-down">↓</span>
         </div>
@@ -17,6 +36,7 @@
       <div class="container">
         <h2>Today's Dashboard</h2>
 
+        <!-- Weather and Activities -->
         <div class="row mt-4">
           <div class="col-md-6 mb-4">
             <div class="card weather-card">
@@ -54,6 +74,7 @@
           </div>
         </div>
 
+        <!-- Nearby Places -->
         <div class="row mt-4">
           <div class="col-12">
             <div class="card nearby-places-card">
@@ -109,12 +130,7 @@ import { apiService } from '../services/apiService.js';
 const userName = ref('User');
 const userLocation = ref('');
 const maxDistance = ref(5);
-const weather = ref({
-  temperature: 25,
-  uvIndex: 5,
-  condition: 'Sunny',
-  isOutdoorSafe: true
-});
+const weather = ref({ temperature: 25, uvIndex: 5, condition: 'Sunny', isOutdoorSafe: true });
 const recommendedActivities = ref([]);
 const nearbyPlaces = ref([]);
 
@@ -124,6 +140,26 @@ const greeting = computed(() => {
   if (hour < 18) return 'Good Afternoon';
   return 'Good Evening';
 });
+
+// Fade-in/fade-out images
+const images = [
+  'https://512pixels.net/downloads/macos-wallpapers-thumbs/10-14-Night-Thumb.jpg',
+  'https://wallpapers.com/images/hd/blue-sea-macbook-pro-4k-2udfdamdy7be4b4i.jpg',
+  'https://images.unsplash.com/photo-1507525428034-b723cf961d3e',
+  'https://a-static.besthdwallpaper.com/lake-sunset-near-to-night-wallpaper-1680x1050-1770_5.jpg'
+];
+const currentImage = ref(0);
+onMounted(() => {
+  setInterval(() => {
+    currentImage.value = (currentImage.value + 1) % images.length;
+  }, 5000);
+});
+
+// Current time
+const currentTime = ref(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+setInterval(() => {
+  currentTime.value = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}, 60000);
 
 const scrollToDashboard = () => {
   const dashboard = document.getElementById('dashboard');
@@ -135,18 +171,12 @@ const fetchNearbyPlaces = async () => {
     alert('Please enter your location');
     return;
   }
-  nearbyPlaces.value = await apiService.getNearbyPlaces(
-    userLocation.value,
-    maxDistance.value,
-    'park'
-  );
+  nearbyPlaces.value = await apiService.getNearbyPlaces(userLocation.value, maxDistance.value, 'park');
 };
 
 onMounted(async () => {
   const user = await userService.getCurrentUser();
-  if (user) {
-    userName.value = user.name || 'User';
-  }
+  if (user) userName.value = user.name || 'User';
 
   weather.value = await apiService.getWeatherData('default') || weather.value;
   recommendedActivities.value = await apiService.getRecommendedActivities(
@@ -171,16 +201,30 @@ onMounted(async () => {
   justify-content: center;
   flex-direction: column;
   text-align: center;
-  background-image: url('https://512pixels.net/downloads/macos-wallpapers-thumbs/10-14-Night-Thumb.jpg');
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
   cursor: pointer;
   color: white;
   position: relative;
   padding: 0 1rem;
   backdrop-filter: blur(4px);
+  background-color: #18171e; 
 }
+
+.hero-bg {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  filter: brightness(0.65);
+  transition: opacity 1s ease-in-out;
+  z-index: -1;
+}
+
+.fade-enter-active, .fade-leave-active {
+  transition: opacity 1s ease-in-out;
+}
+.fade-enter-from, .fade-leave-to { opacity: 0; }
+.fade-enter-to, .fade-leave-from { opacity: 1; }
 
 /* Greeting text */
 .greeting h1 {
@@ -205,7 +249,7 @@ onMounted(async () => {
   gap: 1.5rem;
   font-weight: 500;
   font-size: 1rem;
-  color: #bef0dd;
+  color: #f2fffa;
 }
 
 .info-bar span {
