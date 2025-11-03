@@ -9,7 +9,8 @@
         class="progress-fill"
         :style="{
           width: `${percentage}%`,
-          backgroundColor: barColor
+          backgroundColor: barColor,
+          '--glow-color': barColor
         }"
       >
         <span v-if="showPercentage" class="percentage-text">{{ percentage }}%</span>
@@ -30,8 +31,9 @@ const props = defineProps({
 });
 
 const percentage = computed(() => {
-  if (props.maxValue === 0) return 0;
-  return Math.min(Math.round((props.currentValue / props.maxValue) * 100), 100);
+  // if (props.maxValue === 0) return 0;
+  // return Math.min(Math.round((props.currentValue / props.maxValue) * 100), 100);
+  return 55;
 });
 
 const barColor = computed(() => {
@@ -52,20 +54,21 @@ const barColor = computed(() => {
   justify-content: space-between;
   margin-bottom: 0.5rem;
   font-weight: 600;
-  color: #5E6472;
+  color: #e2e8f7;
 }
 
 .progress-value {
-  color: #FFA69E;
+  color: #fffdfd;
 }
 
 .progress-bar {
   width: 100%;
   height: 30px;
-  background-color: #FAF3DD;
+  background-color: #2e2e2e;
   border-radius: 15px;
   overflow: hidden;
-  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
+  position: relative;
 }
 
 .progress-fill {
@@ -75,6 +78,26 @@ const barColor = computed(() => {
   justify-content: center;
   transition: width 0.5s ease;
   border-radius: 15px;
+  position: relative;
+  animation: progressGlow 2.5s ease-in-out infinite;
+  /* Glow color dynamically updates using CSS variable */
+  box-shadow: 0 0 15px var(--glow-color);
+}
+
+/* ✨ Dynamic pulsating glow animation */
+@keyframes progressGlow {
+  0% {
+    box-shadow: 0 0 10px var(--glow-color, rgba(255,255,255,0.3)),
+                0 0 20px var(--glow-color, rgba(255,255,255,0.2));
+  }
+  50% {
+    box-shadow: 0 0 25px var(--glow-color, rgba(255,255,255,0.8)),
+                0 0 50px var(--glow-color, rgba(255,255,255,0.6));
+  }
+  100% {
+    box-shadow: 0 0 10px var(--glow-color, rgba(255,255,255,0.3)),
+                0 0 20px var(--glow-color, rgba(255,255,255,0.2));
+  }
 }
 
 .percentage-text {
@@ -84,3 +107,4 @@ const barColor = computed(() => {
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 </style>
+

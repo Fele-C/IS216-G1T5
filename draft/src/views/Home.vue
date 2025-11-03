@@ -1,416 +1,109 @@
 <template>
-  <div class="home-page">
-    <section class="hero-section">
-      <div class="container">
-        <div class="greeting">
-          <h1>{{ greeting }}</h1>
-          <h2>Welcome, {{ userName }}</h2>
-        </div>
-        <div class="scroll-prompt" @click="scrollToDashboard">
-          <p>What do you want to do today?</p>
-          <span class="arrow-down">↓</span>
-        </div>
+  <div class="progress-bar-container">
+    <div class="progress-label">
+      <span>{{ label }}</span>
+      <span class="progress-value">{{ currentValue }} / {{ maxValue }}</span>
+    </div>
+    <div class="progress-bar">
+      <div
+        class="progress-fill"
+        :style="{
+          width: `${percentage}%`,
+          backgroundColor: barColor,
+          '--glow-color': barColor
+        }"
+      >
+        <span v-if="showPercentage" class="percentage-text">{{ percentage }}%</span>
       </div>
-    </section>
-
-    <section id="dashboard" class="dashboard-section">
-      <div class="container">
-        <h2>Today's Dashboard</h2>
-
-        <div class="row mt-4">
-          <div class="col-md-6 mb-4">
-            <div class="card weather-card">
-              <div class="card-body">
-                <h3>Weather Conditions</h3>
-                <div class="weather-info">
-                  <div class="weather-icon">☀️</div>
-                  <div class="weather-details">
-                    <p><strong>Temperature:</strong> {{ weather.temperature }}°C</p>
-                    <p><strong>Feels Like:</strong> {{ weather.feelsLike }}°C</p>
-                    <p><strong>UV Index:</strong> {{ weather.uvIndex }}</p>
-                    <p><strong>Condition:</strong> {{ weather.condition }}</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="col-md-6 mb-4">
-            <div class="card recommendations-card">
-              <div class="card-body">
-                <h3>Recommended Activities</h3>
-                <div class="activity-list">
-                  <div
-                    v-for="(activity, index) in recommendedActivities"
-                    :key="index"
-                    class="activity-item"
-                  >
-                    <span class="activity-name">{{ activity.name }}</span>
-                    <span class="activity-calories">{{ activity.caloriesPerHour }} kcal/hr</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="row mt-4">
-          <div class="col-12">
-            <div class="card nearby-places-card">
-              <div class="card-body">
-                <h3>Nearby Outdoor Activities</h3>
-                <div class="location-input-group mb-3">
-                  <input
-                    v-model="userLocation"
-                    type="text"
-                    class="form-control"
-                    placeholder="Enter your location"
-                  />
-                  <input
-                    v-model.number="maxDistance"
-                    type="number"
-                    class="form-control"
-                    placeholder="Max distance (km)"
-                  />
-                  <button @click="fetchNearbyPlaces" class="btn btn-primary">Search</button>
-                </div>
-
-                <div class="places-list">
-                  <div
-                    v-for="(place, index) in nearbyPlaces"
-                    :key="index"
-                    class="place-item"
-                  >
-                    <div class="place-info">
-                      <h4>{{ place.name }}</h4>
-                      <p>{{ place.location }}</p>
-                    </div>
-                    <div class="place-details">
-                      <span class="badge">{{ place.price }}</span>
-                      <span class="badge">{{ place.crowdLevel }}</span>
-                      <span class="badge">{{ place.distanceKm }} km</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
-import { userService } from '../services/userService.js';
-import { apiService } from '../services/apiService.js';
+import { computed } from 'vue';
 
-const userName = ref('User');
-const userLocation = ref('');
-const maxDistance = ref(5);
-const weather = ref({
-  temperature: 25,
-  uvIndex: 5,
-  condition: 'Sunny',
-  isOutdoorSafe: true
-});
-const recommendedActivities = ref([]);
-const nearbyPlaces = ref([]);
-
-const greeting = computed(() => {
-  const hour = new Date().getHours();
-  if (hour < 12) return 'Good Morning';
-  if (hour < 18) return 'Good Afternoon';
-  return 'Good Evening';
+const props = defineProps({
+  label: String,
+  currentValue: Number,
+  maxValue: Number,
+  color: String,
+  showPercentage: Boolean
 });
 
-const scrollToDashboard = () => {
-  const dashboard = document.getElementById('dashboard');
-  dashboard?.scrollIntoView({ behavior: 'smooth' });
-};
+const percentage = computed(() => {
+  // if (props.maxValue === 0) return 0;
+  // return Math.min(Math.round((props.currentValue / props.maxValue) * 100), 100);
+  return 55;
+});
 
-
-
-import axios from 'axios';
-
-const GOOGLE_PLACES_API_KEY = 'AIzaSyCdAB6Z2sTSA41CStyvIQgj5IPa8OiqIFg';
-
-async function getCoordinatesFromAddress(address) {
-  try {
-    const response = await axios.get(`https://maps.googleapis.com/maps/api/geocode/json`, {
-      params: {
-        address: address,
-        key: GOOGLE_PLACES_API_KEY
-      }
-    });
-
-    if (!response.data.results.length) {
-      return null;
-    }
-
-    return response.data.results[0].geometry.location;
-  } catch (error) {
-    console.error('Error fetching coordinates:', error);
-    return null;
-  }
-}
-
-const fetchNearbyPlaces = async () => {
-  if (!userLocation.value) {
-    alert('Please enter your location');
-    return;
-  }
-
-  const coords = await getCoordinatesFromAddress(userLocation.value);
-  if (!coords) {
-    alert('Could not find location coordinates');
-    return;
-  }
-
-  nearbyPlaces.value = await apiService.getNearbyPlaces(
-    coords.lat,
-    coords.lng,
-    maxDistance.value,
-    'park'
-  );
-};
-
-
-onMounted(async () => {
-  const user = await userService.getCurrentUser();
-  if (user) {
-    userName.value = user.name || 'User';
-  }
-
-  weather.value = await apiService.getWeatherData('default') || weather.value;
-  recommendedActivities.value = await apiService.getRecommendedActivities(
-    weather.value,
-    user?.goal || 'maintain',
-    weather.value.isOutdoorSafe
-  );
+const barColor = computed(() => {
+  if (percentage.value < 25) return '#d9534f';      // red
+  if (percentage.value < 50) return '#f0ad4e';      // orange
+  if (percentage.value < 75) return '#ffd966';      // yellow
+  return '#5cb85c';                                 // green
 });
 </script>
 
 <style scoped>
-.home-page {
-  min-height: 100vh;
+.progress-bar-container {
+  margin: 1rem 0;
 }
 
-.hero-section {
-  background: linear-gradient(135deg, #B8F2E6 0%, #AED9E0 100%);
-  min-height: 45vh;
+.progress-label {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  color: #e2e8f7;
+}
+
+.progress-value {
+  color: #fffdfd;
+}
+
+.progress-bar {
+  width: 100%;
+  height: 30px;
+  background-color: #2e2e2e;
+  border-radius: 15px;
+  overflow: hidden;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
+  position: relative;
+}
+
+.progress-fill {
+  height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
-  text-align: center;
+  transition: width 0.5s ease;
+  border-radius: 15px;
+  position: relative;
+  animation: progressGlow 2.5s ease-in-out infinite;
+  /* Glow color dynamically updates using CSS variable */
+  box-shadow: 0 0 15px var(--glow-color);
 }
 
-.greeting h1 {
-  font-size: 2rem;
-  font-weight: 700;
-  color: #5E6472;
-  margin-bottom: 0.75rem;
-}
-
-.greeting h2 {
-  font-size: 1.5rem;
-  color: #FFA69E;
-  font-weight: 600;
-}
-
-.scroll-prompt {
-  margin-top: 2rem;
-  cursor: pointer;
-  transition: transform 0.3s ease;
-}
-
-.scroll-prompt:hover {
-  transform: translateY(3px);
-}
-
-.scroll-prompt p {
-  font-size: 1.1rem;
-  color: #5E6472;
-  margin-bottom: 0.4rem;
-  font-weight: 500;
-}
-
-.arrow-down {
-  font-size: 1.5rem;
-  color: #FFA69E;
-  animation: bounce 2s infinite;
-}
-
-@keyframes bounce {
-  0%, 20%, 50%, 80%, 100% {
-    transform: translateY(0);
+/* ✨ Dynamic pulsating glow animation */
+@keyframes progressGlow {
+  0% {
+    box-shadow: 0 0 10px var(--glow-color, rgba(255,255,255,0.3)),
+                0 0 20px var(--glow-color, rgba(255,255,255,0.2));
   }
-  40% {
-    transform: translateY(10px);
+  50% {
+    box-shadow: 0 0 25px var(--glow-color, rgba(255,255,255,0.8)),
+                0 0 50px var(--glow-color, rgba(255,255,255,0.6));
   }
-  60% {
-    transform: translateY(5px);
+  100% {
+    box-shadow: 0 0 10px var(--glow-color, rgba(255,255,255,0.3)),
+                0 0 20px var(--glow-color, rgba(255,255,255,0.2));
   }
 }
 
-.dashboard-section {
-  padding: 2rem 0;
-  background-color: #FAF3DD;
-}
-
-.dashboard-section h2 {
-  text-align: center;
-  font-size: 1.75rem;
+.percentage-text {
+  color: white;
   font-weight: 700;
-  color: #5E6472;
-  margin-bottom: 1.25rem;
-}
-
-.card {
-  border: none;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  transition: transform 0.3s ease;
-}
-
-.card:hover {
-  transform: translateY(-3px);
-}
-
-.card-body h3 {
-  color: #5E6472;
-  font-weight: 700;
-  font-size: 1.1rem;
-  margin-bottom: 1rem;
-}
-
-.weather-card {
-  background-color: #AED9E0;
-}
-
-.weather-info {
-  display: flex;
-  align-items: center;
-  gap: 1.5rem;
-}
-
-.weather-icon {
-  font-size: 3rem;
-}
-
-.weather-details p {
-  margin: 0.35rem 0;
-  color: #5E6472;
-  font-weight: 500;
   font-size: 0.9rem;
-}
-
-.recommendations-card {
-  background-color: #B8F2E6;
-}
-
-.activity-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.65rem;
-}
-
-.activity-item {
-  display: flex;
-  justify-content: space-between;
-  padding: 0.6rem;
-  background-color: white;
-  border-radius: 6px;
-  font-size: 0.9rem;
-  transition: background-color 0.3s ease;
-}
-
-.activity-item:hover {
-  background-color: #FAF3DD;
-}
-
-.activity-name {
-  font-weight: 600;
-  color: #5E6472;
-}
-
-.activity-calories {
-  color: #FFA69E;
-  font-weight: 500;
-}
-
-.nearby-places-card {
-  background-color: white;
-}
-
-.location-input-group {
-  display: flex;
-  gap: 0.75rem;
-}
-
-.location-input-group input {
-  flex: 1;
-  font-size: 0.9rem;
-  padding: 0.5rem;
-}
-
-.btn-primary {
-  background-color: #FFA69E;
-  border: none;
-  font-weight: 600;
-  font-size: 0.9rem;
-  padding: 0.5rem 1rem;
-  transition: background-color 0.3s ease;
-}
-
-.btn-primary:hover {
-  background-color: #ff8a7e;
-}
-
-.places-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.65rem;
-}
-
-.place-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0.75rem;
-  background-color: #FAF3DD;
-  border-radius: 6px;
-  transition: transform 0.3s ease;
-}
-
-.place-item:hover {
-  transform: translateX(3px);
-}
-
-.place-info h4 {
-  margin: 0;
-  color: #5E6472;
-  font-size: 1rem;
-}
-
-.place-info p {
-  margin: 0.2rem 0 0;
-  color: #888;
-  font-size: 0.85rem;
-}
-
-.place-details {
-  display: flex;
-  gap: 0.4rem;
-}
-
-.badge {
-  background-color: #AED9E0;
-  color: #5E6472;
-  padding: 0.3rem 0.6rem;
-  border-radius: 10px;
-  font-weight: 500;
-  font-size: 0.85rem;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 </style>

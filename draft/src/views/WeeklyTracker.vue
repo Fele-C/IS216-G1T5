@@ -312,88 +312,117 @@ onMounted(async () => {
 <style scoped>
 .weekly-tracker-page {
   min-height: 100vh;
-  background: linear-gradient(135deg, #F0EAD2 0%, #DDE5B6 100%);
   padding: 3rem 0;
+  font-family: "Poppins", sans-serif;
+
+  /* Matching background from overview */
+  background-image: url('https://512pixels.net/downloads/macos-wallpapers-thumbs/10-14-Night-Thumb.jpg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
 }
 
+.weekly-tracker-page > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* Titles */
 .page-title {
   text-align: center;
-  font-size: 2.5rem;
+  font-size: 2.4rem;
   font-weight: 700;
-  color: #6C584C;
+  color: #ffffff;
   margin-bottom: 0.5rem;
+  text-shadow: 2px 2px 4px rgba(207, 231, 248, 0.69);
 }
 
 .page-subtitle {
   text-align: center;
-  font-size: 1.2rem;
-  color: #A98467;
-  margin-bottom: 3rem;
+  color: #bef0dd;
+  font-size: 1.1rem;
+  margin-bottom: 2rem;
+  font-weight: bold;
 }
 
+/* Tree of the Week Section */
 .tree-section {
-  background-color: white;
+  background-color: rgba(225, 255, 251, 0.8);
   border-radius: 15px;
   padding: 2rem;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 6px 16px rgba(255, 255, 255, 0.45);
   text-align: center;
+  transition: transform 0.3s ease;
+}
+
+.tree-section:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.25);
 }
 
 .tree-section h3 {
-  color: #6C584C;
+  color: #4A4A6A;
   font-weight: 700;
-  margin-bottom: 1.5rem;
+  margin-bottom: 1.2rem;
+  text-shadow: 2px 2px 4px rgba(168, 240, 215, 0.25);
 }
 
 .tree-info {
-  margin-top: 2rem;
-}
-
-.calories-summary {
-  text-align: center;
-  margin: 1rem 0;
+  margin-top: 1.5rem;
 }
 
 .calories-summary p {
-  font-size: 1.5rem;
-  color: #6C584C;
+  font-size: 1.3rem;
+  color: #5ba294;
+  font-weight: 600;
 }
 
+/* Save tree button */
 .btn-save-tree {
-  background-color: #ADC178;
-  color: white;
+  background-color: #AED9E0;
   border: none;
-  padding: 0.75rem 2rem;
+  padding: 0.7rem 1.5rem;
   border-radius: 8px;
   font-weight: 600;
-  margin-top: 1rem;
-  transition: background-color 0.3s ease;
+  color: #4A4A6A;
+  cursor: pointer;
+  transition: all 0.3s ease;
 }
 
 .btn-save-tree:hover:not(:disabled) {
-  background-color: #A98467;
+  background-color: #B8F2E6;
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(94, 100, 114, 0.3);
 }
 
 .btn-save-tree:disabled {
-  background-color: #DDE5B6;
+  background-color: #d8f0ec;
+  opacity: 0.6;
   cursor: not-allowed;
 }
 
-.card {
-  border: none;
+/* Daily Progress Section */
+.card.daily-progress-card {
+  background-color: rgba(225, 255, 251, 0.8);
   border-radius: 15px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  background-color: white;
+  box-shadow: 0 6px 16px rgba(255, 255, 255, 0.45);
+  padding: 1.5rem;
+  transition: transform 0.3s ease;
+}
+
+.card.daily-progress-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.25);
 }
 
 .card-body h3 {
-  color: #6C584C;
+  color: #4A4A6A;
   font-weight: 700;
-  margin-bottom: 1.5rem;
-  padding-bottom: 0.75rem;
-  border-bottom: 2px solid #F0EAD2;
+  margin-bottom: 1rem;
+  text-shadow: 1px 1px 3px rgba(186, 226, 214, 0.5);
 }
 
+/* Days list */
 .days-list {
   display: flex;
   flex-direction: column;
@@ -402,64 +431,60 @@ onMounted(async () => {
 
 .day-item {
   padding: 1rem;
-  background-color: #F0EAD2;
+  background-color: rgba(255, 255, 255, 0.4);
   border-radius: 10px;
   display: flex;
   justify-content: space-between;
   align-items: center;
   transition: all 0.3s ease;
-  opacity: 0.6;
+  opacity: 0.7;
+  backdrop-filter: blur(6px);
 }
 
 .day-item.completed {
   opacity: 1;
-  background-color: #DDE5B6;
+  background-color: rgba(180, 255, 228, 0.6);
 }
 
 .day-item.today {
-  border: 2px solid #ADC178;
+  border: 2px solid #AED9E0;
   opacity: 1;
-}
-
-.day-header {
-  display: flex;
-  flex-direction: column;
+  background-color: rgba(192, 248, 235, 0.8);
 }
 
 .day-name {
   font-weight: 700;
-  color: #6C584C;
+  color: #4A4A6A;
   font-size: 1.1rem;
 }
 
 .day-date {
-  color: #A98467;
+  color: #7a8d85;
   font-size: 0.9rem;
-}
-
-.day-progress {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.water-drops {
-  font-size: 1.5rem;
 }
 
 .day-calories {
   font-weight: 700;
-  color: #6C584C;
+  color: #5ba294;
   font-size: 1.2rem;
 }
 
-.no-trees {
-  text-align: center;
-  padding: 3rem;
-  color: #A98467;
-  font-style: italic;
+/* Forest Collection Section */
+.forest-card {
+  background-color: rgba(225, 255, 251, 0.8);
+  border-radius: 15px;
+  box-shadow: 0 6px 16px rgba(255, 255, 255, 0.45);
+  padding: 2rem;
 }
 
+.forest-card h3 {
+  color: #4A4A6A;
+  font-weight: 700;
+  margin-bottom: 1.5rem;
+  text-shadow: 2px 2px 4px rgba(168, 240, 215, 0.25);
+}
+
+/* Trees grid */
 .trees-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
@@ -467,146 +492,130 @@ onMounted(async () => {
 }
 
 .tree-card {
-  background-color: #F0EAD2;
+  background-color: rgba(255, 255, 255, 0.4);
   border-radius: 12px;
   padding: 1rem;
   cursor: pointer;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  transition: all 0.3s ease;
   border: 2px solid transparent;
+  text-align: center;
+  backdrop-filter: blur(6px);
 }
 
 .tree-card:hover {
   transform: translateY(-5px);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
 }
 
 .tree-card.fully-grown {
-  border-color: #ADC178;
-}
-
-.tree-preview {
-  height: 150px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  margin-bottom: 0.5rem;
+  border-color: #AED9E0;
 }
 
 .tree-card-info h5 {
-  color: #6C584C;
+  color: #4A4A6A;
   font-weight: 700;
-  margin-bottom: 0.5rem;
-  font-size: 1rem;
+  margin: 0.5rem 0;
 }
 
 .tree-week {
-  color: #A98467;
-  font-size: 0.85rem;
-  margin: 0.25rem 0;
+  color: #5ba294;
+  font-size: 0.9rem;
 }
 
 .tree-calories {
-  color: #6C584C;
+  color: #4A4A6A;
   font-weight: 600;
-  margin: 0.25rem 0;
 }
 
 .tree-badge {
   display: inline-block;
+  margin-top: 0.4rem;
   padding: 0.3rem 0.8rem;
   border-radius: 12px;
   font-size: 0.8rem;
   font-weight: 600;
   background-color: #DDE5B6;
-  color: #6C584C;
-  margin-top: 0.5rem;
+  color: #4A4A6A;
 }
 
 .tree-badge.complete {
-  background-color: #ADC178;
-  color: white;
+  background-color: #AED9E0;
+  color: #4A4A6A;
 }
 
+/* Modal overlay */
 .modal-overlay {
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
   background-color: rgba(0, 0, 0, 0.5);
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  display: flex; justify-content: center; align-items: center;
   z-index: 1000;
 }
 
 .tree-detail-modal {
-  background-color: white;
+  background-color: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(10px);
   padding: 2rem;
   border-radius: 15px;
   max-width: 600px;
   width: 90%;
-  max-height: 90vh;
-  overflow-y: auto;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
   position: relative;
 }
 
 .btn-close-modal {
   position: absolute;
-  top: 1rem;
-  right: 1rem;
-  background-color: transparent;
+  top: 1rem; right: 1rem;
+  background: none;
   border: none;
   font-size: 2rem;
-  color: #A98467;
+  color: #4A4A6A;
   cursor: pointer;
-  line-height: 1;
 }
 
 .btn-close-modal:hover {
-  color: #6C584C;
+  color: #5ba294;
 }
 
 .tree-detail-modal h3 {
-  color: #6C584C;
+  color: #4A4A6A;
   font-weight: 700;
-  margin-bottom: 1.5rem;
   text-align: center;
-}
-
-.tree-detail-content {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.tree-details {
-  width: 100%;
-  margin-top: 1.5rem;
+  margin-bottom: 1rem;
 }
 
 .detail-row {
   display: flex;
   justify-content: space-between;
   padding: 0.75rem 1rem;
-  background-color: #F0EAD2;
+  background-color: rgba(240, 255, 250, 0.6);
   border-radius: 8px;
   margin-bottom: 0.5rem;
+  backdrop-filter: blur(4px);
 }
 
 .detail-row .label {
   font-weight: 600;
-  color: #6C584C;
+  color: #4A4A6A;
 }
 
 .detail-row .value {
-  color: #A98467;
+  color: #5ba294;
   font-weight: 500;
 }
 
 .detail-row .value.complete {
-  color: #ADC178;
+  color: #AED9E0;
   font-weight: 700;
 }
+
+/* No trees */
+.no-trees {
+  text-align: center;
+  padding: 3rem;
+  color: #bef0dd;
+  font-style: italic;
+}
 </style>
+

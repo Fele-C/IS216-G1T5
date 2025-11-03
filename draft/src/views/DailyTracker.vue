@@ -316,30 +316,39 @@ onMounted(async () => {
 <style scoped>
 .daily-tracker-page {
   min-height: 100vh;
-  background: linear-gradient(135deg, #EEF4ED 0%, #FAF3DD 100%);
   padding: 3rem 0;
+  font-family: "Poppins", sans-serif;
+
+  background-image: url('https://512pixels.net/downloads/macos-wallpapers-thumbs/10-14-Night-Thumb.jpg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
 }
 
 .page-title {
   text-align: center;
-  font-size: 2.5rem;
+  font-size: 2.4rem;
   font-weight: 700;
-  color: #134074;
+  color: #ffffff;
   margin-bottom: 0.5rem;
+  text-shadow: 2px 2px 4px rgba(207, 231, 248, 0.69);
 }
 
 .page-subtitle {
   text-align: center;
-  font-size: 1.2rem;
-  color: #5E6472;
-  margin-bottom: 3rem;
+  color: #bef0dd;
+  font-size: 1.1rem;
+  margin-bottom: 2rem;
+  font-weight: bold;
 }
 
+/* WaterJar + Goal Section */
 .water-jar-section {
-  background-color: white;
+  background-color: rgba(197, 243, 251, 0.526);
   border-radius: 15px;
   padding: 2rem;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 6px 18px rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(6px);
 }
 
 .goal-summary {
@@ -348,61 +357,72 @@ onMounted(async () => {
 }
 
 .goal-summary h4 {
-  color: #134074;
+  color: #4A4A6A;
   font-weight: 700;
   margin-bottom: 1rem;
 }
 
 .goal-summary p {
-  font-size: 1.5rem;
-  color: #5E6472;
+  font-size: 1.4rem;
+  color: #4A4A6A;
   font-weight: 600;
   margin-bottom: 1rem;
 }
 
+/* Activity Card */
 .card {
   border: none;
   border-radius: 15px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  background-color: white;
+  box-shadow: 0 6px 18px rgba(255, 255, 255, 0.2);
+  background-color: rgba(190, 252, 255, 0.466);
+  backdrop-filter: blur(6px);
 }
 
 .card-header-section {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  border-bottom: 2px solid #AED9E0;
   margin-bottom: 1.5rem;
   padding-bottom: 1rem;
-  border-bottom: 2px solid #FAF3DD;
 }
 
 .card-header-section h3 {
-  color: #134074;
+  color: #4A4A6A;
   font-weight: 700;
   margin: 0;
 }
 
+/* Buttons */
 .btn-add {
-  background-color: #8DA9C4;
-  color: white;
+  background-color: #AED9E0;
+  color: #4A4A6A;
   border: none;
-  padding: 0.5rem 1rem;
+  padding: 0.6rem 1rem;
   border-radius: 8px;
-  font-weight: 600;
-  transition: background-color 0.3s ease;
+  font-weight: 700;
+  transition: all 0.3s ease;
 }
 
 .btn-add:hover {
-  background-color: #134074;
+  background-color: #B8F2E6;
+  transform: scale(1.03);
 }
 
-.no-activities {
-  text-align: center;
-  padding: 3rem;
-  color: #888;
-  font-style: italic;
+.btn-delete {
+  background-color: transparent;
+  border: none;
+  color: #ff6b6b;
+  font-size: 1.6rem;
+  cursor: pointer;
+  transition: color 0.3s ease;
 }
 
+.btn-delete:hover {
+  color: #ff4b4b;
+}
+
+/* Activities List */
 .activities-list {
   display: flex;
   flex-direction: column;
@@ -410,14 +430,14 @@ onMounted(async () => {
 }
 
 .activity-item {
-  padding: 1.5rem;
-  background-color: #FAF3DD;
+  background-color: #e1fffbd4;
   border-radius: 12px;
+  padding: 1.2rem;
   transition: transform 0.3s ease;
 }
 
 .activity-item:hover {
-  transform: translateX(5px);
+  transform: translateY(-4px);
 }
 
 .activity-header {
@@ -428,26 +448,9 @@ onMounted(async () => {
 }
 
 .activity-header h4 {
-  color: #134074;
+  color: #4A4A6A;
   font-weight: 700;
   margin: 0;
-}
-
-.btn-delete {
-  background-color: transparent;
-  border: none;
-  color: #ff6b6b;
-  font-size: 2rem;
-  line-height: 1;
-  cursor: pointer;
-  padding: 0;
-  width: 30px;
-  height: 30px;
-  transition: color 0.3s ease;
-}
-
-.btn-delete:hover {
-  color: #ff5252;
 }
 
 .activity-details {
@@ -458,17 +461,19 @@ onMounted(async () => {
 }
 
 .detail-badge {
-  background-color: white;
-  padding: 0.4rem 0.8rem;
+  background-color: #fff;
+  border: 2px solid #AED9E0;
   border-radius: 8px;
+  padding: 0.4rem 0.8rem;
   font-size: 0.9rem;
-  color: #5E6472;
+  color: #4A4A6A;
 }
 
 .detail-badge.outdoor {
   background-color: #B8F2E6;
 }
 
+/* Progress Slider */
 .progress-section {
   margin: 1rem 0;
 }
@@ -476,7 +481,7 @@ onMounted(async () => {
 .slider-label {
   display: block;
   font-weight: 600;
-  color: #134074;
+  color: #4A4A6A;
   margin-bottom: 0.5rem;
 }
 
@@ -485,8 +490,27 @@ onMounted(async () => {
   height: 8px;
   border-radius: 4px;
   outline: none;
-  background: linear-gradient(to right, #134074 0%, #8DA9C4 100%);
+  background: linear-gradient(to right, #AED9E0 0%, #B8F2E6 100%);
   cursor: pointer;
+  position: relative;
+  animation: sliderGlow 2.5s ease-in-out infinite;
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.5);
+  border-radius: 4px;
+}
+
+@keyframes sliderGlow {
+  0% {
+    box-shadow: 0 0 6px rgba(255, 255, 255, 0.4),
+                0 0 12px rgba(255, 255, 255, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 12px rgba(255, 255, 255, 0.8),
+                0 0 25px rgba(255, 255, 255, 0.6);
+  }
+  100% {
+    box-shadow: 0 0 6px rgba(255, 255, 255, 0.4),
+                0 0 12px rgba(255, 255, 255, 0.3);
+  }
 }
 
 .progress-slider::-webkit-slider-thumb {
@@ -494,7 +518,7 @@ onMounted(async () => {
   width: 20px;
   height: 20px;
   border-radius: 50%;
-  background: #134074;
+  background: #4A4A6A;
   cursor: pointer;
 }
 
@@ -502,11 +526,12 @@ onMounted(async () => {
   width: 20px;
   height: 20px;
   border-radius: 50%;
-  background: #134074;
+  background: #4A4A6A;
   cursor: pointer;
   border: none;
 }
 
+/* Calories Display */
 .calories-display {
   text-align: right;
   margin-top: 1rem;
@@ -515,61 +540,53 @@ onMounted(async () => {
 .calories-burnt {
   font-size: 1.8rem;
   font-weight: 700;
-  color: #134074;
+  color: #4A4A6A;
 }
 
 .calories-total {
-  font-size: 1.2rem;
-  color: #5E6472;
+  font-size: 1.1rem;
+  color: #4A4A6A;
   margin-left: 0.5rem;
 }
 
+/* Modal Styling */
 .modal-overlay {
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.5);
+  inset: 0;
+  background-color: rgba(0,0,0,0.5);
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 1000;
 }
 
 .modal-content {
   background-color: white;
   padding: 2rem;
-  border-radius: 15px;
-  max-width: 500px;
+  border-radius: 12px;
   width: 90%;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  max-width: 600px;
+  box-shadow: 0 6px 18px rgba(255, 255, 255, 0.2);
 }
 
 .modal-content h3 {
-  color: #134074;
+  color: #4A4A6A;
   font-weight: 700;
   margin-bottom: 1.5rem;
 }
 
+/* Form Styling */
 .form-label {
+  color: #4A4A6A;
   font-weight: 600;
-  color: #5E6472;
 }
 
-.form-control,
-.form-select {
-  border: 2px solid #FAF3DD;
+.form-control, .form-select {
+  border: 2px solid #AED9E0;
   border-radius: 8px;
   padding: 0.75rem;
 }
 
-.form-control:focus,
-.form-select:focus {
-  border-color: #8DA9C4;
-  box-shadow: 0 0 0 0.2rem rgba(141, 169, 196, 0.25);
-}
-
+/* Modal Buttons */
 .modal-actions {
   display: flex;
   gap: 1rem;
@@ -583,7 +600,7 @@ onMounted(async () => {
   padding: 0.75rem;
   border-radius: 8px;
   font-weight: 600;
-  color: #5E6472;
+  color: #4A4A6A;
   transition: background-color 0.3s ease;
 }
 
@@ -593,16 +610,28 @@ onMounted(async () => {
 
 .btn-submit {
   flex: 1;
-  background-color: #134074;
+  background-color: #AED9E0;
   border: none;
   padding: 0.75rem;
   border-radius: 8px;
-  font-weight: 600;
-  color: white;
-  transition: background-color 0.3s ease;
+  font-weight: 700;
+  color: #4A4A6A;
+  transition: all 0.3s ease;
 }
 
 .btn-submit:hover {
-  background-color: #0B2545;
+  background-color: #B8F2E6;
+  transform: scale(1.03);
 }
+
+/* No Activities */
+.no-activities {
+  text-align: center;
+  padding: 3rem;
+  color: #4A4A6A;
+  font-style: italic;
+}
+
+
+
 </style>
