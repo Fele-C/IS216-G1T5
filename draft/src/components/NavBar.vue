@@ -1,5 +1,8 @@
 <template>
-  <nav class="navbar navbar-expand-lg custom-navbar">
+  <nav
+    class="navbar navbar-expand-lg custom-navbar"
+    :class="{ 'navbar-active': showNavbar }"
+  >
     <div class="container-fluid">
       <router-link to="/" class="navbar-brand">
         <img src="/logofull.png" alt="HealthTracker" style="height: 40px;" />
@@ -63,113 +66,51 @@
 </template>
 
 <script setup>
-import { ref, watch, onMounted } from 'vue';
-import { useAuth } from '../services/authService.js';
-import { userService } from '../services/userService.js';
-import { supabase } from '../lib/supabase.js';
-import { useRouter } from 'vue-router';
+import { ref, onMounted, onUnmounted } from 'vue';
 
-const { user, signOut } = useAuth();
-const router = useRouter();
-const userName = ref('');
+const showNavbar = ref(false);
 
-// Function to load user profile
-const loadUserProfile = async () => {
-  if (user.value) {
-    const { data } = await supabase.from('users').select('*').eq('id', user.value.id).maybeSingle();
-    
-    if (data && data.name) {
-      userName.value = data.name;
-    }
-  }
+const handleMouseMove = (e) => {
+  // Show navbar if mouse is in top 80px of viewport
+  showNavbar.value = e.clientY < 80;
 };
 
-// Load profile on mount
-onMounted(async () => {
-  await loadUserProfile();
+onMounted(() => {
+  window.addEventListener('mousemove', handleMouseMove);
 });
 
-// Watch for user changes (login/logout)
-watch(user, async (newUser) => {
-  if (newUser) {
-    await loadUserProfile();
-  } else {
-    userName.value = '';
-  }
+onUnmounted(() => {
+  window.removeEventListener('mousemove', handleMouseMove);
 });
-
-const handleSignOut = async () => {
-  try {
-    await signOut();
-    userName.value = '';
-    router.push('/');
-  } catch (error) {
-    console.error('Error signing out:', error);
-  }
-};
 </script>
 
 <style scoped>
 .custom-navbar {
-  position: fixed;               /* stay on top */
-  top: 0;
-  left: 0;
+  position: fixed;
+  top: -80px; /* hidden above viewport */
   width: 100%;
   z-index: 1000;
-  
-  background-color: rgba(255, 255, 255, 0.2); /* semi-transparent */
-  backdrop-filter: blur(10px);               /* blur background */
-  -webkit-backdrop-filter: blur(10px);       /* Safari support */
-
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
-  padding: 0.5rem 1rem;
-  border-bottom-left-radius: 12px;   /* optional rounded corners */
-  border-bottom-right-radius: 12px;
+  backdrop-filter: blur(10px);
+  background-color: rgba(255, 255, 255, 0.15); /* glass effect */
+  transition: top 0.35s ease, opacity 0.35s ease;
+  opacity: 0;
 }
 
-.navbar-brand,
-.nav-link,
-.dropdown-item {
-  color: #fff !important;           
+.navbar-active {
+  top: 0;
+  opacity: 1;
 }
 
+/* Nav links glow */
+.nav-link {
+  color: #5E6472;
+  font-weight: 500;
+  transition: color 0.3s ease, text-shadow 0.3s ease;
+}
 
 .nav-link:hover,
 .nav-link.router-link-active {
   color: hsl(183, 100%, 93%);
-  text-shadow:
-    0 0 4px hsl(183, 100%, 93%),
-    0 0 8px hsl(183, 100%, 93%),
-    0 0 12px hsl(183, 100%, 93%);
-  animation: float 1.5s ease-in-out infinite;
+  text-shadow: 0 0 4px hsl(183, 100%, 93%), 0 0 8px hsl(183, 100%, 93%);
 }
-
-/* Float animation */
-@keyframes float {
-  0%, 100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-4px); /* float up by 4px */
-  }
-}
-
-
-.navbar-brand:hover {
-  color: #FFA69E;
-  text-shadow:
-    0 0 4px #FFA69E,
-    0 0 8px #FFA69E,
-    0 0 12px #FFA69E;
-  animation: float 1.5s ease-in-out infinite;
-}
-
-.dropdown-menu {
-  background-color: rgba(255, 255, 255, 0.15);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  border: none;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-
 </style>
