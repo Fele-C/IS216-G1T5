@@ -68,7 +68,7 @@ const percentage = computed(() => {
   // if (!props.goalCalories) return 0;
   // return Math.min(Math.round((props.currentCalories / props.goalCalories) * 100), 100);
 
-  return 75;
+  return 100;
 });
  
 const waterHeight = computed(() => (percentage.value / 100) * 270);
@@ -130,7 +130,7 @@ const waterColor = computed(() => {
 
 .jar-text {
   fill: #EEF4ED;
-  font-size: 2rem;
+  font-size: 1.5rem;
   font-weight: 700;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }

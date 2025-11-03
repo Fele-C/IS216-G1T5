@@ -142,6 +142,17 @@
       </div>
     </div>
   </div>
+  <div class="mini-map">
+              <iframe
+                width="300"
+                height="150"
+                style="border:0; border-radius:10px;"
+                loading="lazy"
+                allowfullscreen
+                referrerpolicy="no-referrer-when-downgrade"
+                :src="`https://www.google.com/maps/embed/v1/view?key=AIzaSyCdAB6Z2sTSA41CStyvIQgj5IPa8OiqIFg&center=${latitude},${longitude}&zoom=13`">
+              </iframe>
+            </div>
 </template>
 
 <script setup>

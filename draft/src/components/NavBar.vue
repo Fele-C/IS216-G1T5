@@ -111,51 +111,65 @@ const handleSignOut = async () => {
 
 <style scoped>
 .custom-navbar {
-  background-color: #AED9E0;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  padding: 0.5rem 0;
+  position: fixed;               /* stay on top */
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 1000;
+  
+  background-color: rgba(255, 255, 255, 0.2); /* semi-transparent */
+  backdrop-filter: blur(10px);               /* blur background */
+  -webkit-backdrop-filter: blur(10px);       /* Safari support */
+
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+  padding: 0.5rem 1rem;
+  border-bottom-left-radius: 12px;   /* optional rounded corners */
+  border-bottom-right-radius: 12px;
 }
 
-.navbar-brand {
-  font-weight: 700;
-  font-size: 1.25rem;
-  color: #5E6472;
-  transition: color 0.3s ease;
+.navbar-brand,
+.nav-link,
+.dropdown-item {
+  color: #fff !important;           
 }
 
-.navbar-brand:hover {
-  color: #FFA69E;
-}
-
-.nav-link {
-  color: #5E6472;
-  font-weight: 500;
-  font-size: 0.95rem;
-  margin: 0 0.35rem;
-  padding: 0.4rem 0.6rem;
-  transition: color 0.3s ease;
-}
 
 .nav-link:hover,
 .nav-link.router-link-active {
+  color: hsl(183, 100%, 93%);
+  text-shadow:
+    0 0 4px hsl(183, 100%, 93%),
+    0 0 8px hsl(183, 100%, 93%),
+    0 0 12px hsl(183, 100%, 93%);
+  animation: float 1.5s ease-in-out infinite;
+}
+
+/* Float animation */
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px); /* float up by 4px */
+  }
+}
+
+
+.navbar-brand:hover {
   color: #FFA69E;
+  text-shadow:
+    0 0 4px #FFA69E,
+    0 0 8px #FFA69E,
+    0 0 12px #FFA69E;
+  animation: float 1.5s ease-in-out infinite;
 }
 
 .dropdown-menu {
-  background-color: #FAF3DD;
+  background-color: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   border: none;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  font-size: 0.9rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
-.dropdown-item {
-  color: #5E6472;
-  padding: 0.4rem 1rem;
-  transition: background-color 0.3s ease;
-}
-
-.dropdown-item:hover {
-  background-color: #B8F2E6;
-  color: #5E6472;
-}
 </style>
