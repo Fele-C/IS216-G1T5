@@ -1,109 +1,336 @@
 <template>
-  <div class="progress-bar-container">
-    <div class="progress-label">
-      <span>{{ label }}</span>
-      <span class="progress-value">{{ currentValue }} / {{ maxValue }}</span>
-    </div>
-    <div class="progress-bar">
-      <div
-        class="progress-fill"
-        :style="{
-          width: `${percentage}%`,
-          backgroundColor: barColor,
-          '--glow-color': barColor
-        }"
-      >
-        <span v-if="showPercentage" class="percentage-text">{{ percentage }}%</span>
+  <div class="home-page">
+    <section class="hero-section">
+      <div class="container">
+        <div class="greeting">
+          <h1>{{ greeting }}</h1>
+          <h2>Welcome, {{ userName }}</h2>
+        </div>
+        <div class="scroll-prompt" @click="scrollToDashboard">
+          <p>What do you want to do today?</p>
+          <span class="arrow-down">↓</span>
+        </div>
       </div>
-    </div>
+    </section>
+
+    <section id="dashboard" class="dashboard-section">
+      <div class="container">
+        <h2>Today's Dashboard</h2>
+
+        <div class="row mt-4">
+          <div class="col-md-6 mb-4">
+            <div class="card weather-card">
+              <div class="card-body">
+                <h3>Weather Conditions</h3>
+                <div class="weather-info">
+                  <div class="weather-icon">☀️</div>
+                  <div class="weather-details">
+                    <p><strong>Temperature:</strong> {{ weather.temperature }}°C</p>
+                    <p><strong>UV Index:</strong> {{ weather.uvIndex }}</p>
+                    <p><strong>Condition:</strong> {{ weather.condition }}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-md-6 mb-4">
+            <div class="card recommendations-card">
+              <div class="card-body">
+                <h3>Recommended Activities</h3>
+                <div class="activity-list">
+                  <div
+                    v-for="(activity, index) in recommendedActivities"
+                    :key="index"
+                    class="activity-item"
+                  >
+                    <span class="activity-name">{{ activity.name }}</span>
+                    <span class="activity-calories">{{ activity.caloriesPerHour }} kcal/hr</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="row mt-4">
+          <div class="col-12">
+            <div class="card nearby-places-card">
+              <div class="card-body">
+                <h3>Nearby Outdoor Activities</h3>
+                <div class="location-input-group mb-3">
+                  <input
+                    v-model="userLocation"
+                    type="text"
+                    class="form-control"
+                    placeholder="Enter your location"
+                  />
+                  <input
+                    v-model.number="maxDistance"
+                    type="number"
+                    class="form-control"
+                    placeholder="Max distance (km)"
+                  />
+                  <button @click="fetchNearbyPlaces" class="btn btn-primary">Search</button>
+                </div>
+
+                <div class="places-list">
+                  <div
+                    v-for="(place, index) in nearbyPlaces"
+                    :key="index"
+                    class="place-item"
+                  >
+                    <div class="place-info">
+                      <h4>{{ place.name }}</h4>
+                      <p>{{ place.location }}</p>
+                    </div>
+                    <div class="place-details">
+                      <span class="badge">{{ place.price }}</span>
+                      <span class="badge">{{ place.crowdLevel }}</span>
+                      <span class="badge">{{ place.distance }} km</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
   </div>
 </template>
 
 <script setup>
-import { computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
+import { userService } from '../services/userService.js';
+import { apiService } from '../services/apiService.js';
 
-const props = defineProps({
-  label: String,
-  currentValue: Number,
-  maxValue: Number,
-  color: String,
-  showPercentage: Boolean
+const userName = ref('User');
+const userLocation = ref('');
+const maxDistance = ref(5);
+const weather = ref({
+  temperature: 25,
+  uvIndex: 5,
+  condition: 'Sunny',
+  isOutdoorSafe: true
+});
+const recommendedActivities = ref([]);
+const nearbyPlaces = ref([]);
+
+const greeting = computed(() => {
+  const hour = new Date().getHours();
+  if (hour < 12) return 'Good Morning';
+  if (hour < 18) return 'Good Afternoon';
+  return 'Good Evening';
 });
 
-const percentage = computed(() => {
-  // if (props.maxValue === 0) return 0;
-  // return Math.min(Math.round((props.currentValue / props.maxValue) * 100), 100);
-  return 55;
-});
+const scrollToDashboard = () => {
+  const dashboard = document.getElementById('dashboard');
+  dashboard?.scrollIntoView({ behavior: 'smooth' });
+};
 
-const barColor = computed(() => {
-  if (percentage.value < 25) return '#d9534f';      // red
-  if (percentage.value < 50) return '#f0ad4e';      // orange
-  if (percentage.value < 75) return '#ffd966';      // yellow
-  return '#5cb85c';                                 // green
+const fetchNearbyPlaces = async () => {
+  if (!userLocation.value) {
+    alert('Please enter your location');
+    return;
+  }
+  nearbyPlaces.value = await apiService.getNearbyPlaces(
+    userLocation.value,
+    maxDistance.value,
+    'park'
+  );
+};
+
+onMounted(async () => {
+  const user = await userService.getCurrentUser();
+  if (user) {
+    userName.value = user.name || 'User';
+  }
+
+  weather.value = await apiService.getWeatherData('default') || weather.value;
+  recommendedActivities.value = await apiService.getRecommendedActivities(
+    weather.value,
+    user?.goal || 'maintain',
+    weather.value.isOutdoorSafe
+  );
 });
 </script>
 
 <style scoped>
-.progress-bar-container {
-  margin: 1rem 0;
+.home-page {
+  font-family: "Poppins", sans-serif;
 }
 
-.progress-label {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 0.5rem;
-  font-weight: 600;
-  color: #e2e8f7;
-}
-
-.progress-value {
-  color: #fffdfd;
-}
-
-.progress-bar {
-  width: 100%;
-  height: 30px;
-  background-color: #2e2e2e;
-  border-radius: 15px;
-  overflow: hidden;
-  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
-  position: relative;
-}
-
-.progress-fill {
-  height: 100%;
+/* Full-screen hero section */
+.hero-section {
+  width: 100vw;
+  height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: width 0.5s ease;
-  border-radius: 15px;
-  position: relative;
-  animation: progressGlow 2.5s ease-in-out infinite;
-  /* Glow color dynamically updates using CSS variable */
-  box-shadow: 0 0 15px var(--glow-color);
-}
-
-/* ✨ Dynamic pulsating glow animation */
-@keyframes progressGlow {
-  0% {
-    box-shadow: 0 0 10px var(--glow-color, rgba(255,255,255,0.3)),
-                0 0 20px var(--glow-color, rgba(255,255,255,0.2));
-  }
-  50% {
-    box-shadow: 0 0 25px var(--glow-color, rgba(255,255,255,0.8)),
-                0 0 50px var(--glow-color, rgba(255,255,255,0.6));
-  }
-  100% {
-    box-shadow: 0 0 10px var(--glow-color, rgba(255,255,255,0.3)),
-                0 0 20px var(--glow-color, rgba(255,255,255,0.2));
-  }
-}
-
-.percentage-text {
+  flex-direction: column;
+  text-align: center;
+  background-image: url('https://512pixels.net/downloads/macos-wallpapers-thumbs/10-14-Night-Thumb.jpg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  cursor: pointer;
   color: white;
-  font-weight: 700;
-  font-size: 0.9rem;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  position: relative;
+  padding: 0 1rem;
+  backdrop-filter: blur(4px);
 }
+
+/* Greeting text */
+.greeting h1 {
+  font-size: 4rem;
+  font-weight: 700;
+  color: #f7f7f7;
+  margin-bottom: 0.75rem;
+  text-shadow: 0 0 6px rgba(216, 226, 251, 0.596);
+}
+
+.greeting h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  text-shadow: 1px 1px 6px rgba(0, 0, 0, 0.3);
+}
+
+/* Info bar under greeting (time, weather, location) */
+.info-bar {
+  margin-top: 0.75rem;
+  display: flex;
+  justify-content: center;
+  gap: 1.5rem;
+  font-weight: 500;
+  font-size: 1rem;
+  color: #bef0dd;
+}
+
+.info-bar span {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+/* Scroll prompt */
+.scroll-prompt {
+  position: absolute;
+  bottom: 3rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  animation: bounce 2s infinite;
+}
+
+.scroll-prompt p {
+  margin-bottom: 0.3rem;
+  color: #bef0dd;
+  text-align: center;
+  font-weight: 500;
+}
+
+.arrow-down {
+  font-size: 2rem;
+  color: #bef0dd;
+}
+
+/* Bounce animation */
+@keyframes bounce {
+  0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+  40% { transform: translateY(10px); }
+  60% { transform: translateY(5px); }
+}
+
+/* Dashboard section */
+.dashboard-section {
+  padding: 3rem 1rem;
+  background-color: #0e0d27;
+}
+
+.dashboard-section h2 {
+  text-align: center;
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #f5f4ff;
+  margin-bottom: 1.25rem;
+}
+
+/* Standard card style for dashboard items */
+.card {
+  border: none;
+  border-radius: 15px;
+  box-shadow: 0 6px 18px rgba(255, 255, 255, 0.2);
+  background-color: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(6px);
+  font-family: "Poppins", sans-serif;
+}
+
+.card-body h3 {
+  color: #4A4A6A;
+  font-weight: 700;
+  border-bottom: 2px solid #AED9E0;
+  padding-bottom: 0.75rem;
+  margin-bottom: 1rem;
+  font-size: 1.25rem;
+}
+
+/* Activity items */
+.activity-item {
+  background-color: #e1fffbd4;
+  border-radius: 12px;
+  padding: 1rem;
+  margin-bottom: 0.5rem;
+  transition: transform 0.3s ease;
+  font-weight: 600;
+  color: #4A4A6A;
+}
+
+.activity-item:hover {
+  transform: translateY(-3px);
+}
+
+/* Nearby places items */
+.place-item {
+  background-color: #e1fffbd4;
+  border-radius: 12px;
+  padding: 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+  transition: transform 0.3s ease;
+  font-weight: 500;
+  color: #4A4A6A;
+}
+
+.place-item:hover {
+  transform: translateY(-3px);
+}
+
+.badge {
+  background-color: #AED9E0;
+  color: #4A4A6A;
+  padding: 0.4rem 0.8rem;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+/* Buttons (standardized) */
+.btn-primary, .btn-generate, .btn-save {
+  background-color: #AED9E0;
+  border: none;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  font-weight: 700;
+  color: #4A4A6A;
+  transition: all 0.3s ease;
+}
+
+.btn-primary:hover, .btn-generate:hover, .btn-save:hover {
+  background-color: #B8F2E6;
+  transform: scale(1.03);
+}
+
 </style>
