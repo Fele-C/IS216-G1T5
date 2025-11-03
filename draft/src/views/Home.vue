@@ -45,6 +45,7 @@
                     class="activity-item"
                   >
                     <span class="activity-name">{{ activity.name }}</span>
+                    <br>
                     <span class="activity-calories">{{ activity.caloriesPerHour }} kcal/hr</span>
                   </div>
                 </div>
@@ -217,6 +218,8 @@ onMounted(async () => {
 .scroll-prompt {
   position: absolute;
   bottom: 3rem;
+  left: 40%;               /* center horizontally */
+  transform: translateX(-50%); /* offset by half its width */
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -224,7 +227,7 @@ onMounted(async () => {
 }
 
 .scroll-prompt p {
-  margin-bottom: 0.3rem;
+  margin: 0;               /* remove default margin */
   color: #bef0dd;
   text-align: center;
   font-weight: 500;
