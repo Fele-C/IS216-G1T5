@@ -1,5 +1,8 @@
 <template>
-  <nav class="navbar navbar-expand-lg custom-navbar">
+  <nav
+    class="navbar navbar-expand-lg custom-navbar"
+    :class="{ 'navbar-active': showNavbar }"
+  >
     <div class="container-fluid">
       <router-link to="/" class="navbar-brand">
         <img src="/logofull.png" alt="HealthTracker" style="height: 40px;" />
@@ -63,99 +66,51 @@
 </template>
 
 <script setup>
-import { ref, watch, onMounted } from 'vue';
-import { useAuth } from '../services/authService.js';
-import { userService } from '../services/userService.js';
-import { supabase } from '../lib/supabase.js';
-import { useRouter } from 'vue-router';
+import { ref, onMounted, onUnmounted } from 'vue';
 
-const { user, signOut } = useAuth();
-const router = useRouter();
-const userName = ref('');
+const showNavbar = ref(false);
 
-// Function to load user profile
-const loadUserProfile = async () => {
-  if (user.value) {
-    const { data } = await supabase.from('users').select('*').eq('id', user.value.id).maybeSingle();
-    
-    if (data && data.name) {
-      userName.value = data.name;
-    }
-  }
+const handleMouseMove = (e) => {
+  // Show navbar if mouse is in top 80px of viewport
+  showNavbar.value = e.clientY < 80;
 };
 
-// Load profile on mount
-onMounted(async () => {
-  await loadUserProfile();
+onMounted(() => {
+  window.addEventListener('mousemove', handleMouseMove);
 });
 
-// Watch for user changes (login/logout)
-watch(user, async (newUser) => {
-  if (newUser) {
-    await loadUserProfile();
-  } else {
-    userName.value = '';
-  }
+onUnmounted(() => {
+  window.removeEventListener('mousemove', handleMouseMove);
 });
-
-const handleSignOut = async () => {
-  try {
-    await signOut();
-    userName.value = '';
-    router.push('/');
-  } catch (error) {
-    console.error('Error signing out:', error);
-  }
-};
 </script>
 
 <style scoped>
 .custom-navbar {
-  background-color: #AED9E0;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  padding: 0.5rem 0;
+  position: fixed;
+  top: -80px; /* hidden above viewport */
+  width: 100%;
+  z-index: 1000;
+  backdrop-filter: blur(10px);
+  background-color: rgba(255, 255, 255, 0.15); /* glass effect */
+  transition: top 0.35s ease, opacity 0.35s ease;
+  opacity: 0;
 }
 
-.navbar-brand {
-  font-weight: 700;
-  font-size: 1.25rem;
-  color: #5E6472;
-  transition: color 0.3s ease;
+.navbar-active {
+  top: 0;
+  opacity: 1;
 }
 
-.navbar-brand:hover {
-  color: #FFA69E;
-}
-
+/* Nav links glow */
 .nav-link {
   color: #5E6472;
   font-weight: 500;
-  font-size: 0.95rem;
-  margin: 0 0.35rem;
-  padding: 0.4rem 0.6rem;
-  transition: color 0.3s ease;
+  transition: color 0.3s ease, text-shadow 0.3s ease;
 }
 
 .nav-link:hover,
 .nav-link.router-link-active {
-  color: #FFA69E;
-}
-
-.dropdown-menu {
-  background-color: #FAF3DD;
-  border: none;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  font-size: 0.9rem;
-}
-
-.dropdown-item {
-  color: #5E6472;
-  padding: 0.4rem 1rem;
-  transition: background-color 0.3s ease;
-}
-
-.dropdown-item:hover {
-  background-color: #B8F2E6;
-  color: #5E6472;
+  color: hsl(183, 100%, 93%);
+  text-shadow: 0 0 4px hsl(183, 100%, 93%), 0 0 8px hsl(183, 100%, 93%);
 }
 </style>
