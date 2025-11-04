@@ -1,6 +1,93 @@
 <template>
   <div class="tree-container">
     <svg class="tree-svg" viewBox="0 0 300 400" xmlns="http://www.w3.org/2000/svg">
+      <!-- Stage 1: Trunk only -->
+      <g v-if="growthStage === 1">
+        <image href="./TreeImages/growthstage1.png" x="0" y="0" width="300" height="400" />
+      </g>
+
+      <!-- Stage 2: Trunk + small foliage -->
+      <g v-else-if="growthStage === 2">
+        <image href="./TreeImages/growthstage2.png" x="0" y="0" width="300" height="400" />
+      </g>
+
+      <!-- Stage 3: Trunk + medium foliage -->
+      <g v-else-if="growthStage === 3">
+        <image href="./TreeImages/growthstage3.png" x="0" y="0" width="300" height="400" />
+
+      </g>
+
+      <!-- Stage 4: Trunk + full foliage -->
+      <g v-else-if="growthStage === 4">
+        <image href="./TreeImages/growthstage4.png" x="0" y="0" width="300" height="400" />
+
+      </g>
+
+      <!-- Stage 5: Full tree + fruits -->
+      <g v-else-if="growthStage === 5">
+        <image href="./TreeImages/growthstage5.png" x="0" y="0" width="300" height="400" />
+
+      </g>
+
+      <!-- Growth label -->
+      <!-- <text x="150" y="390" text-anchor="middle" class="tree-text">
+        {{ growthPercentage }}% Growth
+      </text> -->
+    </svg>
+  </div>
+</template>
+
+<script setup>
+import { computed } from 'vue';
+
+const props = withDefaults(defineProps(), {
+  growthPercentage: 0,
+  treeColor: '#ADC178'
+});
+
+const growthStage = computed(() => {
+  if (props.growthPercentage >= 90) return 5;
+  if (props.growthPercentage >= 70) return 4;
+  if (props.growthPercentage >= 50) return 3;
+  if (props.growthPercentage >= 20) return 2;
+  return 1;
+});
+
+const fruits = [
+  { x: 130, y: 260 },
+  { x: 170, y: 265 },
+  { x: 145, y: 280 },
+  { x: 155, y: 275 }
+];
+</script>
+
+<style scoped>
+.tree-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 2rem;
+}
+
+.tree-svg {
+  width: 300px;
+  height: 400px;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.1));
+}
+
+.tree-text {
+  fill: #6C584C;
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+</style>
+
+
+<!-- ARCHIVE -->
+
+<!-- <template>
+  <div class="tree-container">
+    <svg class="tree-svg" viewBox="0 0 300 400" xmlns="http://www.w3.org/2000/svg">
       <rect x="135" :y="trunkY" width="30" height="80" :fill="trunkColor" class="tree-trunk" />
 
       <ellipse
@@ -55,6 +142,15 @@
 
 <script setup>
 import { computed } from 'vue';
+
+const growthStage = computed(() => {
+  if (props.growthPercentage >= 90) return 5;
+  if (props.growthPercentage >= 70) return 4;
+  if (props.growthPercentage >= 50) return 3;
+  if (props.growthPercentage >= 20) return 2;
+  return 1;
+});
+
 
 const props = withDefaults(
   defineProps(),
@@ -118,4 +214,4 @@ const fruits = computed(() => {
   font-size: 1.2rem;
   font-weight: 600;
 }
-</style>
+</style> -->

@@ -51,8 +51,7 @@
                   </div>
                   <div class="day-progress">
                     <div class="water-drops">💧</div>
-                    <!-- <span class="day-calories">{{ day.calories }} kcal</span> -->
-                    <span class="day-calories">{{ day.isToday ? totalCaloriesBurnt : day.calories }} kcal</span>
+                    <span class="day-calories">{{ day.calories }} kcal</span>
                   </div>
                 </div>
               </div>
