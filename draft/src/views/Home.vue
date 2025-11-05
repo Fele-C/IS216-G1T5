@@ -144,10 +144,12 @@ const greeting = computed(() => {
 
 // Fade-in/fade-out images
 const images = [
-  'https://512pixels.net/downloads/macos-wallpapers-thumbs/10-14-Night-Thumb.jpg',
-  'https://wallpapers.com/images/hd/blue-sea-macbook-pro-4k-2udfdamdy7be4b4i.jpg',
-  'https://images.unsplash.com/photo-1507525428034-b723cf961d3e',
-  'https://a-static.besthdwallpaper.com/lake-sunset-near-to-night-wallpaper-1680x1050-1770_5.jpg'
+  'https://img.freepik.com/premium-photo/warm-sunlight-filters-into-gym-casting-golden-glow-floor-exercise-equipment-creatin_667565-6746.jpg?semt=ais_hybrid&w=740&q=80',
+  'https://dam.mediacorp.sg/image/upload/s--wcP6p1N0--/c_crop,h_705,w_1255,x_1,y_130/c_fill,g_auto,h_676,w_1200/f_auto,q_auto/v1/mediacorp/cna/image/2022/10/05/istock-1158362998.jpg?itok=3tn34nsU',
+  'https://static.thehoneycombers.com/wp-content/uploads/sites/2/2013/10/running-trails-singapore.png',
+  'https://cassette.sphdigital.com.sg/image/womensweekly/943b36691d1a2d5f959686c7bc398984dba47361119b985fe9ea2b0cf93a1983?w=1000&q=85',
+  'https://www.ricemedia.co/wp-content/uploads/2023/11/Ricemedia_Unusual-Morning-Routines-Kim_2_Marc-Clarence-1.jpg',
+  'https://offloadmedia.feverup.com/secretsingapore.co/wp-content/uploads/2024/01/10232958/YOGA-SEEDS-1-1024x683.jpg',
 ];
 const currentImage = ref(0);
 onMounted(() => {
