@@ -68,11 +68,11 @@ const percentage = computed(() => {
   if (!props.goalCalories) return 0;
   return Math.min(Math.round((props.currentCalories / props.goalCalories) * 100), 100);
 
-<<<<<<< HEAD
-  // return 100;
-=======
-  return 100;
->>>>>>> ecc4f39fde34f36a87314d7f7ffa8db341c85119
+// <<<<<<< HEAD
+//   // return 100;
+// =======
+//   return 100;
+// >>>>>>> ecc4f39fde34f36a87314d7f7ffa8db341c85119
 });
  
 const waterHeight = computed(() => (percentage.value / 100) * 270);
@@ -97,7 +97,6 @@ const waterColor = computed(() => {
   if (percentage.value < 90) return '#0B2545';
   return '#134074'; 
 });
-
 </script>
 
 <style scoped>
