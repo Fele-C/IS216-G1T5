@@ -482,36 +482,67 @@ onMounted(async () => {
 <style scoped>
 .profile-page {
   min-height: 100vh;
-  padding: 0.5rem 0 0.5rem 0;
+  padding: 3rem 0;
   transition: background-color 0.5s ease;
+  position: relative;
+  background-image: url('https://512pixels.net/downloads/macos-wallpapers-thumbs/10-14-Night-Thumb.jpg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
 }
 
 .profile-page.theme-green {
-  background: linear-gradient(135deg, #B8F2E6 0%, #FAF3DD 100%);
+  background-color: transparent;
 }
 
 .profile-page.theme-blue {
-  background: linear-gradient(135deg, #AED9E0 0%, #FAF3DD 100%);
+  background-color: transparent;
 }
 
 .profile-page.theme-red {
-  background: linear-gradient(135deg, #FFA69E 0%, #FAF3DD 100%);
+  background-color: transparent;
 }
+
+/* Removed rotating hero background; using static background image to match DailyTracker */
 
 .page-title {
   text-align: center;
-  font-size: 1.5rem;
+  font-size: 2.4rem;
   font-weight: 700;
-  color: #5E6472;
+  color: #ffffff;
   margin-bottom: 0.5rem;
+  text-shadow: 2px 2px 4px rgba(207, 231, 248, 0.69);
+}
+
+.page-subtitle {
+  text-align: center;
+  color: #bef0dd;
+  font-size: 1.05rem;
+  margin-bottom: 1.25rem;
+  font-weight: bold;
 }
 
 .card {
   border: none;
-  border-radius: 10px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  background-color: white;
+  border-radius: 15px;
+  box-shadow: 0 6px 18px rgba(255, 255, 255, 0.2);
+  background-color: rgba(190, 252, 255, 0.466);
+  backdrop-filter: blur(6px);
   height: 100%;
+}
+
+/* Spacing harmony like DailyTracker */
+.mb-3 { margin-bottom: 0.5rem !important; }
+.mb-4 { margin-bottom: 0.6rem !important; }
+.mt-4 { margin-top: 0.6rem !important; }
+
+.card-header-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 2px solid #AED9E0;
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
 }
 
 .card-body {
@@ -523,13 +554,27 @@ onMounted(async () => {
   height: 100%;
 }
 
-.card-body h3 {
-  color: #5E6472;
+.card-header-section h3 {
+  color: #4A4A6A;
   font-weight: 700;
-  font-size: 1.05rem;
-  margin-bottom: 0.6rem;
-  padding-bottom: 0.4rem;
-  border-bottom: 2px solid #FAF3DD;
+  margin: 0;
+}
+
+/* Match DailyTracker header style for BMI card header */
+.bmi-meter-card .card-body h3 {
+  color: #4A4A6A;
+  font-weight: 700;
+  margin: 0;
+}
+
+/* Match DailyTracker header style for the Progress card title */
+.progress-card .card-body h3 {
+  color: #4A4A6A;
+  font-weight: 700;
+  margin: 0;
+  border-bottom: 2px solid #AED9E0;
+  padding-bottom: 1rem;
+  margin-bottom: 1rem;
 }
 
 .card-header-section {
@@ -590,8 +635,8 @@ onMounted(async () => {
 
 .stat-label {
   font-weight: 600;
-  color: #5E6472;
-  font-size: 0.85rem;
+  color: #4A4A6A;
+  font-size: 0.9rem;
   margin-bottom: 0.2rem;
 }
 

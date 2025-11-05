@@ -142,7 +142,7 @@ const greeting = computed(() => {
   return 'Good Evening';
 });
 
-// Fade-in/fade-out images - Outdoor exercise & fitness theme
+// Fade-in/fade-out images
 const images = [
   'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=1920&q=80', // Person running in nature
   'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=1920&q=80', // Outdoor yoga/fitness
@@ -228,11 +228,12 @@ onMounted(async () => {
 <style scoped>
 .home-page {
   font-family: "Poppins", sans-serif;
+  overflow-x: hidden; /* prevent horizontal scroll */
 }
 
 /* Full-screen hero section */
 .hero-section {
-  width: 100vw;
+  width: 100%;
   height: 100vh;
   display: flex;
   align-items: center;

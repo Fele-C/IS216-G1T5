@@ -1,7 +1,6 @@
 <template>
   <nav
-    class="navbar navbar-expand-lg custom-navbar"
-    :class="{ 'navbar-active': showNavbar }"
+    class="navbar navbar-expand-lg navbar-dark bg-dark custom-navbar"
   >
     <div class="container-fluid">
       <router-link to="/" class="navbar-brand">
@@ -32,7 +31,7 @@
               href="#"
               id="activitiesDropdown"
               role="button"
-              data-bs-toggle="dropdown"
+              :class="{ active: isActivities }"
             >
               Activities
             </a>
@@ -50,11 +49,11 @@
               href="#"
               id="userDropdown"
               role="button"
-              data-bs-toggle="dropdown"
+              :class="{ active: isProfile }"
             >
               {{ userName || user.email }}
             </a>
-            <ul class="dropdown-menu" aria-labelledby="userDropdown">
+            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
               <li><router-link to="/profile" class="dropdown-item">Profile</router-link></li>
               <li><button @click="handleSignOut" class="dropdown-item">Sign Out</button></li>
             </ul>
@@ -66,51 +65,121 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, watch, computed } from 'vue';
+import { useRoute } from 'vue-router';
+import { useAuth } from '../services/authService.js';
 
-const showNavbar = ref(false);
+const { user, signOut, getUserProfile } = useAuth();
+const userName = ref('');
+const route = useRoute();
 
-const handleMouseMove = (e) => {
-  // Show navbar if mouse is in top 80px of viewport
-  showNavbar.value = e.clientY < 80;
+const isActivities = computed(() => route.path.startsWith('/activities'));
+const isProfile = computed(() => route.path.startsWith('/profile'));
+
+const loadUserName = async () => {
+  try {
+    if (user.value?.id) {
+      const profile = await getUserProfile(user.value.id);
+      userName.value = profile?.name || '';
+    } else {
+      userName.value = '';
+    }
+  } catch (_) {
+    userName.value = '';
+  }
 };
 
-onMounted(() => {
-  window.addEventListener('mousemove', handleMouseMove);
-});
+const handleSignOut = async () => {
+  await signOut();
+};
 
-onUnmounted(() => {
-  window.removeEventListener('mousemove', handleMouseMove);
-});
+watch(user, loadUserName, { immediate: true });
 </script>
 
 <style scoped>
 .custom-navbar {
-  position: fixed;
-  top: -80px; /* hidden above viewport */
+  position: relative; /* default navbar behavior */
   width: 100%;
-  z-index: 1000;
-  backdrop-filter: blur(10px);
-  background-color: rgba(255, 255, 255, 0.15); /* glass effect */
-  transition: top 0.35s ease, opacity 0.35s ease;
-  opacity: 0;
-}
-
-.navbar-active {
-  top: 0;
-  opacity: 1;
+  z-index: 1020; /* align with Bootstrap navbar z-index */
 }
 
 /* Nav links glow */
 .nav-link {
-  color: #5E6472;
-  font-weight: 500;
-  transition: color 0.3s ease, text-shadow 0.3s ease;
+  color: #f8f9fa;
+  font-weight: 600;
+  transition: color 0.2s ease, text-decoration-color 0.2s ease, transform 0.15s ease;
+  text-decoration: none;
+  text-underline-offset: 6px;
+  padding-bottom: 0.25rem;
+  will-change: transform;
 }
 
-.nav-link:hover,
+.nav-link:hover {
+  color: #e2efff;
+  text-decoration: none;
+  transform: translateY(-2px) scale(1.02);
+}
+
+/* Selected tab underline */
 .nav-link.router-link-active {
-  color: hsl(183, 100%, 93%);
-  text-shadow: 0 0 4px hsl(183, 100%, 93%), 0 0 8px hsl(183, 100%, 93%);
+  color: #ffffff;
+  border-bottom: 3px solid #B8F2E6;
+}
+
+/* Also highlight dropdown toggles when active via route */
+.nav-link.active {
+  color: #ffffff;
+  border-bottom: 3px solid #B8F2E6;
+}
+
+/* Dropdown menu styles */
+.dropdown-menu {
+  background-color: #212529; /* Bootstrap dark */
+  color: #f8f9fa;
+  border: none;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+  max-width: calc(100vw - 1rem);
+}
+
+/* Ensure right-aligned menus stay within viewport even when opened on hover */
+.dropdown-menu.dropdown-menu-end {
+  right: 0;
+  left: auto;
+}
+
+.dropdown-item {
+  color: #f8f9fa;
+}
+
+.dropdown-item.router-link-active {
+  background-color: #2b3035;
+  color: #ffffff;
+}
+
+.dropdown-item:hover,
+.dropdown-item:focus {
+  background-color: #2b3035;
+  color: #ffffff;
+  text-decoration: none;
+  transform: translateX(2px);
+}
+
+/* Dropdown toggle color */
+#userDropdown.nav-link,
+#activitiesDropdown.nav-link {
+  color: #f8f9fa;
+}
+
+#userDropdown.nav-link:hover,
+#activitiesDropdown.nav-link:hover {
+  color: #e2efff;
+}
+
+/* Show dropdowns on hover for desktop */
+@media (hover: hover) and (pointer: fine) {
+  .dropdown:hover > .dropdown-menu {
+    display: block;
+    margin-top: 0;
+  }
 }
 </style>
