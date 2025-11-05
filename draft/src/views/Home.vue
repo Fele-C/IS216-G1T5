@@ -172,6 +172,44 @@ import axios from 'axios';
 
 const GOOGLE_PLACES_API_KEY = 'AIzaSyCdAB6Z2sTSA41CStyvIQgj5IPa8OiqIFg';
 
+
+async function getUserCurrentLocation() {
+  return new Promise((resolve, reject) => {
+    if (!navigator.geolocation) {
+      reject('Geolocation not supported');
+    }
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        resolve({
+          lat: position.coords.latitude,
+          lng: position.coords.longitude
+        });
+      },
+      (err) => reject(err.message)
+    );
+  });
+}
+
+// ADD THIS in Home.vue (with your other helper functions)
+async function getAddressFromCoordinates(lat, lng) {
+  try {
+    const response = await axios.get(`https://maps.googleapis.com/maps/api/geocode/json`, {
+      params: {
+        latlng: `${lat},${lng}`,
+        key: GOOGLE_PLACES_API_KEY
+      }
+    });
+
+    if (!response.data.results.length) return 'Unknown location';
+
+    return response.data.results[0].formatted_address; // returns the readable address
+  } catch (error) {
+    console.error('Error reverse geocoding:', error);
+    return 'Unknown location';
+  }
+}
+
+
 async function getCoordinatesFromAddress(address) {
   try {
     const response = await axios.get(`https://maps.googleapis.com/maps/api/geocode/json`, {
@@ -216,11 +254,27 @@ onMounted(async () => {
   const user = await userService.getCurrentUser();
   if (user) userName.value = user.name || 'User';
 
-  weather.value = await apiService.getWeatherData('default') || weather.value;
+  try {
+    const coords = await getUserCurrentLocation();
+    // userLocation.value = `${coords.lat},${coords.lng}`; // optional display
+    userLocation.value = await getAddressFromCoordinates(coords.lat, coords.lng);
+    weather.value = await apiService.getWeatherData(coords) || weather.value;
+    nearbyPlaces.value = await apiService.getNearbyPlaces(coords.lat, coords.lng, maxDistance.value, 'park');
+  } catch (error) {
+    console.warn('Could not get user location, falling back to default.');
+    weather.value = await apiService.getWeatherData('default') || weather.value;
+  }
+
   recommendedActivities.value = await apiService.getRecommendedActivities(
     weather.value,
     user?.goal || 'maintain',
     weather.value.isOutdoorSafe
+
+  // weather.value = await apiService.getWeatherData('default') || weather.value;
+  // recommendedActivities.value = await apiService.getRecommendedActivities(
+  //   weather.value,
+  //   user?.goal || 'maintain',
+  //   weather.value.isOutdoorSafe
   );
 });
 </script>

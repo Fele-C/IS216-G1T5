@@ -67,16 +67,19 @@ const props = defineProps({
 const percentage = computed(() => {
   if (!props.goalCalories) return 0;
   return Math.min(Math.round((props.currentCalories / props.goalCalories) * 100), 100);
+
+<<<<<<< HEAD
+  // return 100;
+=======
+  return 100;
+>>>>>>> ecc4f39fde34f36a87314d7f7ffa8db341c85119
 });
  
 const waterHeight = computed(() => (percentage.value / 100) * 270);
 const waterY = computed(() => 290 - waterHeight.value);
 
 // For static wave path
-const wavePath = computed(() => 
-  `M60 ${waterY.value} Q80 ${waterY.value - 5} 100 ${waterY.value} T140 ${waterY.value}`
-);
-
+const wavePath = computed(() => `M60 ${waterY.value} Q80 ${waterY.value-5} 100 ${waterY.value} T140 ${waterY.value}`);
 
 // Animation values for a gentle up/down wave
 const waveAnimationValues = computed(() => `
@@ -91,7 +94,6 @@ const waterColor = computed(() => {
   if (percentage.value < 90) return '#0B2545';
   return '#134074'; 
 });
-
 </script>
 
 <style scoped>
@@ -131,7 +133,7 @@ const waterColor = computed(() => {
 
 .jar-text {
   fill: #EEF4ED;
-  font-size: 1.5rem;
+  font-size: 2rem;
   font-weight: 700;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }

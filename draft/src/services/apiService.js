@@ -12,6 +12,13 @@ export const apiService = {
       // INSERT GOOGLE WEATHER API CALL HERE
       // Example: 
       // const response = await axios.get(`https://api.google.com/weather?location=${location}&key=${GOOGLE_WEATHER_API_KEY}`);
+      let url;
+      if (typeof _location === 'object' && _location.lat && _location.lng) {
+        url = `https://weather.googleapis.com/v1/currentConditions:lookup?key=${GOOGLE_WEATHER_API_KEY}&location.latitude=${_location.lat}&location.longitude=${_location.lng}`;
+      } else {
+        // fallback to default coordinates
+        url = `https://weather.googleapis.com/v1/currentConditions:lookup?key=${GOOGLE_WEATHER_API_KEY}&location.latitude=1.3521&location.longitude=103.8198`;
+      }
 
       const response = await axios.get(`https://weather.googleapis.com/v1/currentConditions:lookup?key=${GOOGLE_WEATHER_API_KEY}&location.latitude=1.3521&location.longitude=103.8198`);
       const temperature= response.data.temperature.degrees;
@@ -208,4 +215,3 @@ export const apiService = {
     
   }
 };
-

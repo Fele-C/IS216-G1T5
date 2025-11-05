@@ -31,9 +31,9 @@ const props = defineProps({
 });
 
 const percentage = computed(() => {
-  // if (props.maxValue === 0) return 0;
-  // return Math.min(Math.round((props.currentValue / props.maxValue) * 100), 100);
-  return 55;
+  if (props.maxValue === 0) return 0;
+  return Math.min(Math.round((props.currentValue / props.maxValue) * 100), 100);
+  //return 55;
 });
 
 const barColor = computed(() => {
