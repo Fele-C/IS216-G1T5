@@ -109,9 +109,9 @@ export const activityService = {
     return data || [];
   },
 
-  async deleteActivity(activityId) {
+  async deleteActivity(activityId, table) {
     const { error } = await supabase
-      .from('activity_logs')
+      .from(table)
       .delete()
       .eq('id', activityId);
 

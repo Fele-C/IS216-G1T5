@@ -42,9 +42,9 @@
                   class="activity-item"
                 >
                   <div class="activity-header">
-                    <h4>{{ activity.activity_name }}</h4>
+                    <h4>{{ activity.activity }}</h4>
                     <button
-                      @click="deleteActivity(activity.id)"
+                      @click="openDeleteModal(activity)"
                       class="btn-delete"
                       title="Delete activity"
                     >
@@ -82,7 +82,17 @@
                     <span class="calories-burnt">
                       {{ Math.round((activity.calories || 0) * (activity.completion_percentage || 0) / 100) }}
                     </span>
-                    <span class="calories-total">/ {{ activity.calories }} kcal</span>
+                    <span class="calories-total">/ {{ Math.round(activity.calories) }} kcal</span>
+                  </div>
+                </div>
+                <div v-if="showDeleteModal" class="modal-overlay" @click="showDeleteModal = false">
+                  <div class="modal-content" @click.stop>
+                    <h3>Confirm Deletion</h3>
+                    <p>Are you sure you want to delete this activity?</p>
+                    <div class="modal-buttons">
+                      <button @click="deleteActivity()" class="btn btn-danger">Delete</button>
+                      <button @click="showDeleteModal = false" class="btn btn-secondary">Cancel</button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -170,6 +180,8 @@ const id = ref("");
 const dailyGoal = ref(2000);
 const showAddActivity = ref(false);
 const totalCaloriesBurnt = ref(0);
+const showDeleteModal = ref(false);
+const activityToDelete = ref(null);
 const newActivity = ref({
   activity_name: '',
   duration: 30,
@@ -245,6 +257,10 @@ const updateActivityProgress = async (activity) => {
       user_id : id.value,
       percentage : activity.completion_percentage
     });
+
+    activities.value = await activityService.getCompletedActivitiesByDate(id.value, today.toISOString().split('T')[0]);
+    console.log("UPDATED > User:", id.value, "Returned", activities.value)
+
     return
     }
 
@@ -292,22 +308,38 @@ const addActivity = async () => {
     outdoor : newActivity.value.is_outdoor
   });
 
+  showAddActivity.value = false;
   await loadActivities();
 };
 
-const deleteActivity = async (activityId) => {
-  if (confirm('Are you sure you want to delete this activity?')) {
-    const success = await activityService.deleteActivity(activityId);
-    if (success) {
-      activities.value = activities.value.filter(a => a.id !== activityId);
-    }
+const deleteActivity = async () => {
+  if (!activityToDelete.value) return; // safeguard
+  console.log(activityToDelete.value)
+  const match = activities.value.find(a => a.activity === activityToDelete.value.activity);
+
+  if (match) {
+    const log = await activityService.deleteActivity(match.id, 'activity_log')
   }
+
+  const success = await activityService.deleteActivity(activityToDelete.value.id, 'daily_activity');
+  if (success) {
+    activities.value = activities.value.filter(a => a.id !== activityToDelete.value.id);
+  }
+  showDeleteModal.value = false;
+
+  await loadActivities();
+};
+
+const openDeleteModal = (activity) => {
+  activityToDelete.value = activity;
+  showDeleteModal.value = true;
 };
 
 onMounted(async () => {
   const user = await userService.getCurrentUser();
   if (user) {
     dailyGoal.value = user.recommended_calories;
+    console.log("User loaded")
   }
   await loadActivities();
 });
@@ -631,7 +663,5 @@ onMounted(async () => {
   color: #4A4A6A;
   font-style: italic;
 }
-
-
 
 </style>
