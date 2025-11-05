@@ -60,7 +60,9 @@ export const apiService = {
 
   async getNearbyPlaces(lat, lng, radiusKm = 5, type = 'park') {
     try {
-      const response = await axios.get('http://localhost:3000/api/nearby-places', {
+      // Use relative path - Firebase Hosting will route to the Cloud Function
+      // For local dev, use Firebase emulator or set up Vite proxy
+      const response = await axios.get('/api/nearby-places', {
         params: {
           lat,
           lng,

@@ -142,12 +142,13 @@ const greeting = computed(() => {
   return 'Good Evening';
 });
 
-// Fade-in/fade-out images
+// Fade-in/fade-out images - Outdoor exercise & fitness theme
 const images = [
-  'https://512pixels.net/downloads/macos-wallpapers-thumbs/10-14-Night-Thumb.jpg',
-  'https://wallpapers.com/images/hd/blue-sea-macbook-pro-4k-2udfdamdy7be4b4i.jpg',
-  'https://images.unsplash.com/photo-1507525428034-b723cf961d3e',
-  'https://a-static.besthdwallpaper.com/lake-sunset-near-to-night-wallpaper-1680x1050-1770_5.jpg'
+  'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=1920&q=80', // Person running in nature
+  'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=1920&q=80', // Outdoor yoga/fitness
+  'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=1920&q=80', // Mountain hiking
+  'https://images.unsplash.com/photo-1517838277536-f5f99be501cd?w=1920&q=80', // Outdoor workout
+  'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=1920&q=80'  // Trail running
 ];
 const currentImage = ref(0);
 onMounted(() => {

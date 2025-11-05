@@ -22,6 +22,10 @@
     ],
     "rewrites": [
       {
+        "source": "/api/nearby-places",
+        "function": "nearbyPlaces"
+      },
+      {
         "source": "**",
         "destination": "/index.html"
       }
