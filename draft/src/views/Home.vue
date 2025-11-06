@@ -1,5 +1,6 @@
 <template>
   <div class="home-page">
+    <!-- Hero Section -->
     <section class="hero-section" @click="scrollToDashboard">
       <!-- Background Image -->
       <transition name="fade" mode="out-in">
@@ -17,7 +18,7 @@
           <h2>Welcome, {{ userName }}</h2>
         </div>
 
-        <!-- Info bar: time, weather, location -->
+        <!-- Info bar -->
         <div class="info-bar">
           <span>⏰ {{ currentTime }}</span>
           <span>☀️ {{ weather.condition }}, {{ weather.temperature }}°C</span>
@@ -32,12 +33,14 @@
       </div>
     </section>
 
+    <!-- Dashboard Section -->
     <section id="dashboard" class="dashboard-section">
       <div class="container">
         <h2>Today's Dashboard</h2>
 
-        <!-- Weather and Activities -->
+        <!-- Weather + Recommendations -->
         <div class="row mt-4">
+          <!-- Weather Card -->
           <div class="col-md-6 mb-4">
             <div class="card weather-card">
               <div class="card-body">
@@ -55,6 +58,7 @@
             </div>
           </div>
 
+          <!-- Recommendations Card -->
           <div class="col-md-6 mb-4">
             <div class="card recommendations-card">
               <div class="card-body">
@@ -81,6 +85,7 @@
             <div class="card nearby-places-card">
               <div class="card-body">
                 <h3>Nearby Outdoor Activities</h3>
+
                 <div class="location-input-group mb-3">
                   <input
                     v-model="userLocation"
@@ -94,7 +99,9 @@
                     class="form-control"
                     placeholder="Max distance (km)"
                   />
-                  <button @click="fetchNearbyPlaces" class="btn btn-primary">Search</button>
+                  <button @click="fetchNearbyPlaces" class="btn btn-primary">
+                    Search
+                  </button>
                 </div>
 
                 <div class="places-list">
@@ -114,6 +121,9 @@
                     </div>
                   </div>
                 </div>
+
+                <!-- Mini Map -->
+                <div id="mini-map" class="mini-map mt-4"></div>
               </div>
             </div>
           </div>
@@ -127,6 +137,7 @@
 import { ref, computed, onMounted } from 'vue';
 import { userService } from '../services/userService.js';
 import { apiService } from '../services/apiService.js';
+import axios from 'axios';
 
 const userName = ref('User');
 const userLocation = ref('');
@@ -142,7 +153,7 @@ const greeting = computed(() => {
   return 'Good Evening';
 });
 
-// Fade-in/fade-out images
+// Background Images
 const images = [
   'https://img.freepik.com/premium-photo/warm-sunlight-filters-into-gym-casting-golden-glow-floor-exercise-equipment-creatin_667565-6746.jpg?semt=ais_hybrid&w=740&q=80',
   'https://dam.mediacorp.sg/image/upload/s--wcP6p1N0--/c_crop,h_705,w_1255,x_1,y_130/c_fill,g_auto,h_676,w_1200/f_auto,q_auto/v1/mediacorp/cna/image/2022/10/05/istock-1158362998.jpg?itok=3tn34nsU',
@@ -158,125 +169,131 @@ onMounted(() => {
   }, 5000);
 });
 
-// Current time
+// Current Time
 const currentTime = ref(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
 setInterval(() => {
   currentTime.value = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 }, 60000);
 
 const scrollToDashboard = () => {
-  const dashboard = document.getElementById('dashboard');
-  dashboard?.scrollIntoView({ behavior: 'smooth' });
+  document.getElementById('dashboard')?.scrollIntoView({ behavior: 'smooth' });
 };
 
-import axios from 'axios';
+// Google Maps
+const GOOGLE_PLACES_API_KEY = 'AIzaSyD6-tkzFCWwwXU2B8ZntgiUq6ZgVYVOTrw';
+let map;
 
-const GOOGLE_PLACES_API_KEY = 'AIzaSyCdAB6Z2sTSA41CStyvIQgj5IPa8OiqIFg';
+async function loadGoogleMaps() {
+  if (window.google && window.google.maps) return;
+  return new Promise((resolve) => {
+    const script = document.createElement("script");
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_PLACES_API_KEY}`;
+    script.async = true;
+    document.head.appendChild(script);
+    script.onload = resolve;
+  });
+}
 
+async function initMap(lat, lng, places = []) {
+  await loadGoogleMaps();
+  const mapOptions = {
+    center: { lat, lng },
+    zoom: 13,
+    mapTypeControl: false,
+    streetViewControl: false,
+  };
+  map = new google.maps.Map(document.getElementById("mini-map"), mapOptions);
 
+  // User marker
+  new google.maps.Marker({
+    position: { lat, lng },
+    map,
+    title: "You are here",
+    icon: "http://maps.google.com/mapfiles/ms/icons/blue-dot.png",
+  });
+
+  const bounds = new google.maps.LatLngBounds();
+  bounds.extend({ lat, lng });
+
+  // Place markers
+  places.forEach((place) => {
+    const placeLat = place.latitude || place.lat || place.geometry?.location?.lat;
+    const placeLng = place.longitude || place.lng || place.geometry?.location?.lng;
+    if (placeLat && placeLng) {
+      new google.maps.Marker({
+        position: { lat: placeLat, lng: placeLng },
+        map,
+        title: place.name,
+        icon: "http://maps.google.com/mapfiles/ms/icons/green-dot.png",
+      });
+      bounds.extend({ lat: placeLat, lng: placeLng });
+    }
+  });
+
+  map.fitBounds(bounds);
+}
+
+// Location Helpers
 async function getUserCurrentLocation() {
   return new Promise((resolve, reject) => {
-    if (!navigator.geolocation) {
-      reject('Geolocation not supported');
-    }
+    if (!navigator.geolocation) return reject('Geolocation not supported');
     navigator.geolocation.getCurrentPosition(
-      (position) => {
-        resolve({
-          lat: position.coords.latitude,
-          lng: position.coords.longitude
-        });
-      },
-      (err) => reject(err.message)
+      pos => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+      err => reject(err.message)
     );
   });
 }
 
-// ADD THIS in Home.vue (with your other helper functions)
 async function getAddressFromCoordinates(lat, lng) {
   try {
-    const response = await axios.get(`https://maps.googleapis.com/maps/api/geocode/json`, {
-      params: {
-        latlng: `${lat},${lng}`,
-        key: GOOGLE_PLACES_API_KEY
-      }
+    const res = await axios.get('https://maps.googleapis.com/maps/api/geocode/json', {
+      params: { latlng: `${lat},${lng}`, key: GOOGLE_PLACES_API_KEY }
     });
-
-    if (!response.data.results.length) return 'Unknown location';
-
-    return response.data.results[0].formatted_address; // returns the readable address
-  } catch (error) {
-    console.error('Error reverse geocoding:', error);
-    return 'Unknown location';
+    return res.data.results[0]?.formatted_address || 'Unknown location';
+  } catch (err) {
+    console.error(err); return 'Unknown location';
   }
 }
-
 
 async function getCoordinatesFromAddress(address) {
   try {
-    const response = await axios.get(`https://maps.googleapis.com/maps/api/geocode/json`, {
-      params: {
-        address: address,
-        key: GOOGLE_PLACES_API_KEY
-      }
+    const res = await axios.get('https://maps.googleapis.com/maps/api/geocode/json', {
+      params: { address, key: GOOGLE_PLACES_API_KEY }
     });
-
-    if (!response.data.results.length) {
-      return null;
-    }
-
-    return response.data.results[0].geometry.location;
-  } catch (error) {
-    console.error('Error fetching coordinates:', error);
-    return null;
+    return res.data.results[0]?.geometry.location || null;
+  } catch (err) {
+    console.error(err); return null;
   }
 }
 
+// Fetch nearby places
 const fetchNearbyPlaces = async () => {
-  if (!userLocation.value) {
-    alert('Please enter your location');
-    return;
-  }
-
+  if (!userLocation.value) { alert('Please enter your location'); return; }
   const coords = await getCoordinatesFromAddress(userLocation.value);
-  if (!coords) {
-    alert('Could not find location coordinates');
-    return;
-  }
+  if (!coords) { alert('Could not find location coordinates'); return; }
 
   nearbyPlaces.value = await apiService.getNearbyPlaces(
-    coords.lat,
-    coords.lng,
-    maxDistance.value,
-    'park'
+    coords.lat, coords.lng, maxDistance.value, 'park'
   );
+  await initMap(coords.lat, coords.lng, nearbyPlaces.value);
 };
 
+// On mount
 onMounted(async () => {
   const user = await userService.getCurrentUser();
   if (user) userName.value = user.name || 'User';
 
   try {
     const coords = await getUserCurrentLocation();
-    // userLocation.value = `${coords.lat},${coords.lng}`; // optional display
     userLocation.value = await getAddressFromCoordinates(coords.lat, coords.lng);
     weather.value = await apiService.getWeatherData(coords) || weather.value;
     nearbyPlaces.value = await apiService.getNearbyPlaces(coords.lat, coords.lng, maxDistance.value, 'park');
-  } catch (error) {
-    console.warn('Could not get user location, falling back to default.');
+    await initMap(coords.lat, coords.lng, nearbyPlaces.value);
+  } catch {
     weather.value = await apiService.getWeatherData('default') || weather.value;
   }
 
-  recommendedActivities.value = await apiService.getRecommendedActivities(
-    weather.value,
-    user?.goal || 'maintain',
-    weather.value.isOutdoorSafe
-
-  // weather.value = await apiService.getWeatherData('default') || weather.value;
-  // recommendedActivities.value = await apiService.getRecommendedActivities(
-  //   weather.value,
-  //   user?.goal || 'maintain',
-  //   weather.value.isOutdoorSafe
-  );
+  recommendedActivities.value = await apiService.getRecommendedActivities(weather.value, user?.goal || 'maintain', weather.value.isOutdoorSafe);
 });
 </script>
 
@@ -284,7 +301,13 @@ onMounted(async () => {
 .home-page {
   font-family: "Poppins", sans-serif;
 }
-
+.mini-map {
+  width: 100%;
+  height: 300px;
+  border-radius: 15px;
+  overflow: hidden;
+  box-shadow: 0 6px 18px rgba(255, 255, 255, 0.2);
+}
 /* Full-screen hero section */
 .hero-section {
   width: 100vw;
