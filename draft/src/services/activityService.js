@@ -33,20 +33,34 @@ export const activityService = {
   },
 
   async getActivitiesByWeek(userId, today) {
-  
-    const { data, error } = await supabase
-      .from('weekly_plan')
-      .select('*')
-      .eq('user_id', userId)
-      .lte('start_date', today)
-      .gte('end_date', today); // checks date falls within the week
+    // Determine Monday of the current week based on provided 'today' (YYYY-MM-DD)
+    try {
+      const base = today ? new Date(today) : new Date();
+      base.setHours(0, 0, 0, 0);
+      const day = base.getDay();
+      const diff = day === 0 ? -6 : 1 - day; // Monday as start
+      const weekStart = new Date(base);
+      weekStart.setDate(base.getDate() + diff);
+      weekStart.setHours(0, 0, 0, 0);
+      const weekStartStr = weekStart.toISOString().split('T')[0];
 
-    if (error) {
-      console.error('Error fetching weekly activities:', error);
+      const { data, error } = await supabase
+        .from('weekly_plan')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('week_start_date', weekStartStr)
+        .order('day_of_week', { ascending: true });
+
+      if (error) {
+        console.error('Error fetching weekly activities:', error);
+        return [];
+      }
+
+      return data || [];
+    } catch (e) {
+      console.error('Error computing week start for weekly activities:', e);
       return [];
     }
-
-    return data || [];
   },
 
   async extraActivity(activity) {
