@@ -66,6 +66,93 @@ export const apiService = {
     }
   },
 
+
+  async getWeatherDataNew(location) {
+    try {
+      const lat = location?.lat || 1.3521;
+      const lng = location?.lng || 103.8198;
+
+      // ⚠️ If calling Google directly, note: this may fail in browser due to CORS
+      const url = `https://weather.googleapis.com/v1/forecast/days:lookup?key=${GOOGLE_WEATHER_API_KEY}&location.latitude=${lat}&location.longitude=${lng}`;
+
+      const response = await fetch(url);
+      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+      const data = await response.json();
+
+      if (!data?.forecastDays) {
+        console.warn('⚠️ No forecastDays found in API response:', data);
+        return null;
+      }
+
+      // Map forecast to ISO date keys
+      const forecastMap = {};
+      data.forecastDays.forEach((day) => {
+        const { year, month, day: dayOfMonth } = day.displayDate;
+        const date = new Date(year, month - 1, dayOfMonth);
+        const dateKey = date.toISOString().split('T')[0];
+
+        // const temp = day.maxTemperature?.degrees || day.temperature?.max || 28;
+        // const uv = day.maxUvIndex || day.uv || 4;
+        // const conditions = day.conditionCode || day.condition || 'Sunny';
+        // ✅ FIXED extraction for new Google Weather API structure
+        const temp =
+        day.daytimeForecast?.temperature?.value ||
+        day.daytimeForecast?.apparentTemperature?.value ||
+        28;
+
+        const uv =
+        day.daytimeForecast?.uvIndex ??
+        day.nighttimeForecast?.uvIndex ??
+        4;
+
+        const conditions =
+        day.daytimeForecast?.weatherCondition?.description?.text ||
+        day.nighttimeForecast?.weatherCondition?.description?.text ||
+        'Sunny';
+
+
+        // Determine safety
+        let isOutdoorSafe = true;
+        let weatherWarning = 'Great weather for outdoor activities!';
+        const conditionText = (conditions || '').toLowerCase();
+
+        if (conditionText.includes('rain') || conditionText.includes('storm') ||
+            conditionText.includes('thunder') || conditionText.includes('shower')) {
+          isOutdoorSafe = false;
+          weatherWarning = 'Wet weather expected, stay under shelter';
+        } else if ((uv && uv > 5) || (temp && temp > 32)) {
+          isOutdoorSafe = false;
+          weatherWarning = 'Dangerous weather expected, avoid outdoor activities';
+        } else if ((uv && uv > 2) || (temp && temp > 27)) {
+          weatherWarning = 'Safe for outdoor activities, but stay hydrated and apply sunscreen';
+        }
+
+        forecastMap[dateKey] = {
+          // temp,
+          // uv,
+          uvIndex: uv,
+          temperature: temp,
+          condition: conditions,
+          // conditions,
+          isOutdoorSafe,
+          weatherWarning,
+          fullForecast: day
+        };
+      });
+
+      // ✅ Return the entire forecast map, not just one day
+      return forecastMap;
+
+    } catch (error) {
+      console.error('❌ Error fetching weather:', error);
+      return null;
+    }
+  },
+
+
+
+
+
   async getWeatherForecast(_location, dates) {
     try {
       console.log('🌤️ getWeatherForecast called with:', { location: _location, dates });
