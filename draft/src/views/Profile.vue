@@ -37,10 +37,10 @@
           </div>
         </div>
 
-        <div class="col-lg-6 mb-3">
+        <!-- <div class="col-lg-6 mb-3">
           <div class="card progress-card">
             <div class="card-body">
-              <h3>Your Progress</h3>
+              <h3>Tree Collection</h3>
 
               <div class="view-toggle mb-3">
                 <button
@@ -79,7 +79,7 @@
               </div>
             </div>
           </div>
-        </div>
+        </div>  -->
       </div>
 
       <div class="row">

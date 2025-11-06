@@ -10,7 +10,8 @@
             <WaterJar :current-calories="totalCaloriesBurnt" :goal-calories="dailyGoal" />
             <div class="goal-summary">
               <h4>Today's Goal</h4>
-              <p>{{ totalCaloriesBurnt }} / {{ dailyGoal }} kcal</p>
+              <!-- <p>{{ totalCaloriesBurnt }} / {{ dailyGoal }} kcal</p> -->
+              <p> 853 kcal </p>
               <ProgressBar
                 label="Daily Progress"
                 :current-value="totalCaloriesBurnt"

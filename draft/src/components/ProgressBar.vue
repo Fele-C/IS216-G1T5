@@ -2,7 +2,7 @@
   <div class="progress-bar-container">
     <div class="progress-label">
       <span>{{ label }}</span>
-      <span class="progress-value">{{ currentValue }} / {{ maxValue }}</span>
+      <!-- <span class="progress-value">{{ currentValue }} / {{ maxValue }}</span> -->
     </div>
     <div class="progress-bar">
       <div
