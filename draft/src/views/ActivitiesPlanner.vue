@@ -218,20 +218,20 @@
     return '';
   };
   
-  // Fetch Weather via shared service (no Google Maps dependency)
-  const getWeatherData = async (location) => {
-    const data = await apiService.getWeatherData(location || 'default');
-    // Normalize to fields this component expects for filtering
-    if (data) {
-      return {
-        temp: data.temperature,
-        uv: data.uvIndex,
-        conditions: data.condition,
-        isOutdoorSafe: data.isOutdoorSafe
-      };
+
+  const getWeatherDataNew = async (location) => {
+    const forecastMap = await apiService.getWeatherDataNew(location);
+
+    // If the API failed, fallback to defaults
+    if (!forecastMap) {
+      return { temp: 28, uv: 4, conditions: 'Sunny', isOutdoorSafe: true };
     }
-    // Fallback defaults
-    return { temp: 28, uv: 4, conditions: 'Sunny', isOutdoorSafe: true };
+
+    const todayKey = new Date().toISOString().split('T')[0];
+    const todayWeather = forecastMap[todayKey];
+
+    // Return today’s weather as primary reference
+    return todayWeather || { temp: 28, uv: 4, conditions: 'Sunny', isOutdoorSafe: true };
   };
   
   // Recommend activities from Supabase activity_list (name, met, location_type)
@@ -293,7 +293,7 @@
 
       // Fetch weather forecast for the selected workout days
       console.log('🌤️ ActivitiesPlanner: Fetching weather forecast...');
-      let weatherForecast = await apiService.getWeatherForecast(
+      let weatherForecast = await apiService.getWeatherDataNew(
         userLocation.value || 'Singapore',
         workoutDates
       );
@@ -307,7 +307,7 @@
 
       // Also get current weather for initial activity filtering
       console.log('🌡️ ActivitiesPlanner: Fetching current weather...');
-      const weatherData = await getWeatherData(userLocation.value || 'Singapore');
+      const weatherData = await getWeatherDataNew(userLocation.value || 'Singapore');
       console.log('📊 ActivitiesPlanner: Current weather received:', weatherData);
       const caloriesPerDay = Math.round(weeklyCalorieGoal.value / selectedDays.value.length);
       const activities = recommendActivities(weatherData);
