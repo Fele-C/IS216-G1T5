@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-// INSERT YOUR API KEYS HERE:
+
 const GOOGLE_WEATHER_API_KEY = 'AIzaSyDowpr_xuUgYE9czDZ3rNjcZjqxgRkNLVU';
 const GOOGLE_PLACES_API_KEY = 'AIzaSyCdAB6Z2sTSA41CStyvIQgj5IPa8OiqIFg';
 const RAPIDAPI_BMI_KEY = 'cc6fa81db9msh92b2d4cce5184dap1ef0bejsn153aaf0110d9';
@@ -9,18 +9,18 @@ const API_NINJAS_KEY = 'OAHR8uB9r7FjiHqqmJ/EtA==e5lc9Gi9HXBBRjOi';
 export const apiService = {
   async getWeatherData(_location) {
     try {
-      // Use proxy endpoint to avoid CORS issues
+      
       let lat, lng;
       if (typeof _location === 'object' && _location.lat && _location.lng) {
         lat = _location.lat;
         lng = _location.lng;
       } else {
-        // fallback to default coordinates (Singapore)
+        
         lat = 1.3521;
         lng = 103.8198;
       }
 
-      // Call proxy endpoint instead of direct API
+      
       const response = await axios.get('/api/weather/current', {
         params: { lat, lng }
       });
@@ -70,7 +70,7 @@ export const apiService = {
       const lat = location?.lat || 1.3521;
       const lng = location?.lng || 103.8198;
 
-      // ⚠️ If calling Google directly, note: this may fail in browser due to CORS
+     
       const url = `https://weather.googleapis.com/v1/forecast/days:lookup?key=${GOOGLE_WEATHER_API_KEY}&location.latitude=${lat}&location.longitude=${lng}`;
 
       const response = await fetch(url);
@@ -82,7 +82,7 @@ export const apiService = {
         return null;
       }
 
-      // Map forecast to ISO date keys
+   
       const forecastMap = {};
       data.forecastDays.forEach((day) => {
         const { year, month, day: dayOfMonth } = day.displayDate;
@@ -92,7 +92,7 @@ export const apiService = {
         // const temp = day.maxTemperature?.degrees || day.temperature?.max || 28;
         // const uv = day.maxUvIndex || day.uv || 4;
         // const conditions = day.conditionCode || day.condition || 'Sunny';
-        // ✅ FIXED extraction for new Google Weather API structure
+       
         const temp =
         day.daytimeForecast?.temperature?.value ||
         day.daytimeForecast?.apparentTemperature?.value ||
@@ -109,7 +109,7 @@ export const apiService = {
         'Sunny';
 
 
-        // Determine safety
+    
         let isOutdoorSafe = true;
         let weatherWarning = 'Great weather for outdoor activities!';
         const conditionText = (conditions || '').toLowerCase();
@@ -126,19 +126,17 @@ export const apiService = {
         }
 
         forecastMap[dateKey] = {
-          // temp,
-          // uv,
           uvIndex: uv,
           temperature: temp,
           condition: conditions,
-          // conditions,
+          
           isOutdoorSafe,
           weatherWarning,
           fullForecast: day
         };
       });
 
-      // ✅ Return the entire forecast map, not just one day
+      
       return forecastMap;
 
     } catch (error) {
@@ -150,31 +148,31 @@ export const apiService = {
     try {
       console.log('🌤️ getWeatherForecast called with:', { location: _location, dates });
       
-      // Get location coordinates
+      
       let lat, lng;
       if (typeof _location === 'object' && _location.lat && _location.lng) {
         lat = _location.lat;
         lng = _location.lng;
         console.log('📍 Using provided coordinates:', { lat, lng });
       } else {
-        // Default to Singapore coordinates
+        
         lat = 1.3521;
         lng = 103.8198;
         console.log('📍 Using default coordinates (Singapore):', { lat, lng });
       }
 
-      // Calculate number of days needed (up to 10 days max for Google Weather API)
+     
       const today = new Date();
       today.setHours(0, 0, 0, 0);
       
-      // Find the maximum date in the dates array
+      
       const maxDate = dates.reduce((max, date) => {
         const d = new Date(date);
         d.setHours(0, 0, 0, 0);
         return d > max ? d : max;
       }, today);
       
-      // Calculate days difference
+      
       const daysDiff = Math.ceil((maxDate - today) / (1000 * 60 * 60 * 24));
       const daysToFetch = Math.min(Math.max(daysDiff, 1), 10);
       
@@ -186,7 +184,7 @@ export const apiService = {
         requestedDates: dates.map(d => new Date(d).toISOString().split('T')[0])
       });
 
-      // Fetch daily forecast using proxy endpoint to avoid CORS issues
+      
       console.log('🔗 Fetching forecast via proxy:', { lat, lng, daysToFetch });
       
       const response = await axios.get('/api/weather/forecast', {
@@ -199,7 +197,7 @@ export const apiService = {
         fullResponse: response.data
       });
       
-      // Handle different possible response structures
+      
       let forecastDays = null;
       if (response.data?.dailyForecast?.days) {
         forecastDays = response.data.dailyForecast.days;
@@ -217,12 +215,12 @@ export const apiService = {
       
       console.log(`📊 Total forecast days received: ${forecastDays.length}`);
       
-      // Map forecasts to requested dates
+      
       const forecastMap = {};
       
       forecastDays.forEach((forecastDay, index) => {
         console.log(`\n🔍 Processing forecast day ${index + 1}:`, forecastDay);
-        // Parse the forecast date - handle different possible date field names
+        
         const dateValue = forecastDay.date || forecastDay.dateValue || forecastDay.startDate;
         if (!dateValue) {
           console.warn('⚠️ Forecast day missing date field:', forecastDay);
@@ -239,7 +237,7 @@ export const apiService = {
         forecastDate.setHours(0, 0, 0, 0);
         console.log(`   📆 Parsed forecast date: ${forecastDate.toISOString().split('T')[0]}`);
         
-        // Check if this forecast matches any requested date
+        
         dates.forEach((requestedDate, reqIndex) => {
           const reqDate = new Date(requestedDate);
           if (isNaN(reqDate.getTime())) {
@@ -256,7 +254,7 @@ export const apiService = {
           if (forecastDate.getTime() === reqDate.getTime()) {
             console.log(`   ✅ Date match found! Processing weather data...`);
             
-            // Extract relevant weather data - handle different possible structures
+            
             const dayForecast = forecastDay.dayForecast || forecastDay.day || forecastDay;
             console.log(`   📦 Day forecast object:`, dayForecast);
             
@@ -278,7 +276,7 @@ export const apiService = {
               uvIndex
             });
             
-            // Determine if outdoor safe using similar logic as current conditions
+            
             let isOutdoorSafe = true;
             let weatherWarning = null;
             
@@ -347,8 +345,7 @@ export const apiService = {
 
   async getNearbyPlaces(lat, lng, radiusKm = 5, type = 'park') {
     try {
-      // Use relative path - Firebase Hosting will route to the Cloud Function
-      // For local dev, use Firebase emulator or set up Vite proxy
+      
       const response = await axios.get('/api/nearby-places', {
         params: {
           lat,
@@ -372,14 +369,14 @@ export const apiService = {
 
   async calculateBMI(weight, height, age, gender) {
     try {
-      // Map gender to API format ('m' or 'f')
+      
       let sex = 'm';
       if (gender === 'female') {
         sex = 'f';
       } else if (gender === 'male') {
         sex = 'm';
       } else {
-        sex = 'm'; // default to male
+        sex = 'm'; 
       }
 
       const options = {
@@ -407,7 +404,7 @@ export const apiService = {
       const response = await axios.request(options);
       console.log('BMI API Response:', response.data);
       
-      // Extract data from API response
+      
       const apiData = response.data;
       
       return {
@@ -419,7 +416,7 @@ export const apiService = {
       };
     } catch (error) {
       console.error('Error calling BMI API:', error.response?.data || error.message);
-      // Fallback to local calculation if API fails
+      
       const bmi = weight / Math.pow(height / 100, 2);
       return {
         bmi: parseFloat(bmi.toFixed(2)),
@@ -432,11 +429,7 @@ export const apiService = {
 
   async getCaloriesBurnt(_activity, duration, weight) {
     try {
-      // INSERT API NINJAS CALORIES BURNT CALCULATION HERE
-      // Example: const response = await axios.get(`https://api.api-ninjas.com/v1/caloriesburned`, {
-      //   params: { activity, duration, weight },
-      //   headers: { 'X-Api-Key': API_NINJAS_KEY }
-      // });
+      
 
       const response = await axios.get(`https://api.api-ninjas.com/v1/caloriesburned`, {
       params: {
@@ -447,8 +440,7 @@ export const apiService = {
       headers: { 'X-Api-Key': API_NINJAS_KEY }
       });
 
-      // const baseCaloriesPerMinute = (response.data[0].calories_per_hour)/60;
-      // return Math.round(baseCaloriesPerMinute * duration * (weight / 70));
+      
       const calories_burnt = response.data[0].total_calories;
       const calories_burnt_per_hour = response.data[0].calories_per_hour;
       return{
@@ -475,17 +467,6 @@ export const apiService = {
     ];
 
 
-    // return activities.filter(activity => {
-    //   if (isOutdoor && activity.type !== 'outdoor') return false;
-    //   if (!isOutdoor && activity.type !== 'indoor') return false;
-    //   if (weather && !activity.weatherSafe.includes('All') && !activity.weatherSafe.includes(weather.condition)) {
-    //     return false;
-    //   }
-
-    //   if(isOutdoor)
-
-    //   return true;
-    // });
 
     if(isOutdoor){
       return activities;

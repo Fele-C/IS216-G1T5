@@ -1,7 +1,7 @@
 <template>
   <div class="home-page">
     <section class="hero-section" @click="scrollToDashboard">
-      <!-- Background Image -->
+      
       <transition name="fade" mode="out-in">
         <div
           class="hero-bg"
@@ -11,14 +11,14 @@
       </transition>
 
       <div class="container">
-        <!-- Greeting -->
+        
         <div class="greeting">
           <h1>{{ greeting }}</h1>
           <h2>Welcome, {{ userName }}</h2>
           <h2> Time to turn those goals into gains! </h2>
         </div>
 
-        <!-- Info bar: time, weather, location -->
+        
         <div class="info-bar">
           <span>⏰ {{ currentTime }}</span>
           <span>☀️ {{ weather.condition }}</span>
@@ -27,7 +27,7 @@
           <span>📍 {{ userLocation || 'Unknown' }}</span>
         </div>
 
-        <!-- Scroll prompt -->
+        
         <div class="scroll-prompt">
           <p>What do you want to do today?</p>
           <span class="arrow-down">↓</span>
@@ -39,7 +39,7 @@
       <div class="container">
         <h2>Today's Dashboard</h2>
 
-        <!-- Activities + Nearby Places side by side -->
+        
         <div class="row mt-4">
           <div class="col-md-6 mb-4">
             <div class="card recommendations-card">
@@ -117,9 +117,7 @@
                       <h4>{{ place.name }}</h4>
                       <p>{{ place.location }}</p>
 
-                      <!-- <div class="place-info">
-                      <h4>{{ place.name }}</h4>
-                      <p>{{ place.location }}</p> -->
+                      
 
                       <div v-if="place.weather" class="place-weather">
                         <span>Weather: {{ place.weather.condition }}, {{ place.weather.temperature }}°C</span>
@@ -171,7 +169,7 @@ const greeting = computed(() => {
   return 'Good Evening';
 });
 
-// Fade-in/fade-out images (served from public/images)
+
 const images = [
   '/images/men-exercise-by-running-road-bridge.jpg',
   '/images/young-sportive-couple-doing-yoga-fitness-people-summer-park.jpg',
@@ -186,7 +184,7 @@ onMounted(() => {
   }, 5000);
 });
 
-// Current time
+
 const currentTime = ref(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
 setInterval(() => {
   currentTime.value = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -219,7 +217,7 @@ async function getUserCurrentLocation() {
   });
 }
 
-// ADD THIS in Home.vue (with your other helper functions)
+
 async function getAddressFromCoordinates(lat, lng) {
   try {
     const response = await axios.get(`https://maps.googleapis.com/maps/api/geocode/json`, {
@@ -300,7 +298,7 @@ const fetchNearbyPlaces = async () => {
   //   'park'
   // );
 
-  // 2️⃣ Fetch nearby parks first
+  
   const places = await apiService.getNearbyPlaces(
     coords.lat,
     coords.lng,
@@ -308,7 +306,7 @@ const fetchNearbyPlaces = async () => {
     'park'
   );
 
-  // 2️⃣ For each place, fetch weather info
+  
   // const placesWithWeather = await Promise.all(
   //   places.map(async (place) => {
   //     try {
@@ -343,7 +341,7 @@ const fetchNearbyPlaces = async () => {
   const placesWithWeather = await Promise.all(
   places.map(async (place) => {
     try {
-      // Use your geocode function to get lat/lng
+      
       const coords = await getCoordinatesFromAddress(place.location);
 
       if (!coords) {
@@ -355,7 +353,7 @@ const fetchNearbyPlaces = async () => {
         lng: coords.lng,
       });
 
-      // Normalize response
+      
       const normalizedWeather = weatherData
         ? {
             temperature: weatherData.temperature ?? weatherData.temp,
@@ -365,19 +363,12 @@ const fetchNearbyPlaces = async () => {
           }
         : null;
 
-    //   return { ...place, weather: normalizedWeather };
-    // } catch (error) {
-    //   console.error('Error fetching weather for place:', place.name, error);
-    //   return { ...place, weather: null };
-    // }
-    // Fetch recommended activities based on weather (assuming outdoor)
-      // const recommendedActivities = normalizedWeather
+    
       const placeRecommended = normalizedWeather
         ? await apiService.getRecommendedActivities(normalizedWeather, null, true)
         : [];
 
-      // Pick the first 2 activities
-      // const activities = recommendedActivities.slice(0, 2);
+      
       const activities = getRandomActivities(placeRecommended, 2);
 
       return { ...place, weather: normalizedWeather, activities };
@@ -390,13 +381,13 @@ const fetchNearbyPlaces = async () => {
 placesWithWeather.sort((a, b) => {
   const distA = parseFloat(a.distanceKm);
   const distB = parseFloat(b.distanceKm);
-  return distA - distB; // ascending order
+  return distA - distB; 
 });
 
 nearbyPlaces.value = placesWithWeather;
 };
 
-// Activity carousel functions
+
 const nextActivity = () => {
   if (recommendedActivities.value.length === 0) return;
   currentActivityIndex.value = (currentActivityIndex.value + 1) % recommendedActivities.value.length;
@@ -409,7 +400,7 @@ const previousActivity = () => {
     : currentActivityIndex.value - 1;
 };
 
-// Auto-scroll carousel
+
 let carouselInterval = null;
 
 const startCarousel = () => {
@@ -418,7 +409,7 @@ const startCarousel = () => {
   
   carouselInterval = setInterval(() => {
     nextActivity();
-  }, 4000); // Change slide every 4 seconds
+  }, 4000); 
 };
 
 const stopCarousel = () => {
@@ -428,7 +419,7 @@ const stopCarousel = () => {
   }
 };
 
-// Get encouragement message for activity
+
 const getEncouragement = (activityName) => {
   const encouragements = {
     'Running': 'Push your limits and feel the burn!',
@@ -449,7 +440,7 @@ const getEncouragement = (activityName) => {
     'Golf': 'Swing into a healthier lifestyle!'
   };
   
-  // Try to find a match (case-insensitive)
+  
   const normalizedName = activityName?.toLowerCase() || '';
   for (const [key, value] of Object.entries(encouragements)) {
     if (normalizedName.includes(key.toLowerCase())) {
@@ -466,7 +457,7 @@ onMounted(async () => {
 
   try {
     const coords = await getUserCurrentLocation();
-    // userLocation.value = `${coords.lat},${coords.lng}`; // optional display
+    
     userLocation.value = await getAddressFromCoordinates(coords.lat, coords.lng);
     weather.value = await apiService.getWeatherData(coords) || weather.value;
     nearbyPlaces.value = await apiService.getNearbyPlaces(coords.lat, coords.lng, maxDistance.value, 'park');
@@ -483,11 +474,11 @@ onMounted(async () => {
 
   console.log("Activities fetched:", recommendedActivities.value);
   
-  // Start carousel after activities are loaded
+  
   startCarousel();
 });
 
-// Cleanup on unmount
+
 onUnmounted(() => {
   stopCarousel();
 });
@@ -496,10 +487,10 @@ onUnmounted(() => {
 <style scoped>
 .home-page {
   font-family: "Poppins", sans-serif;
-  overflow-x: hidden; /* prevent horizontal scroll */
+  overflow-x: hidden; 
 }
 
-/* Full-screen hero section */
+
 .hero-section {
   width: 100%;
   height: 100vh;
@@ -533,7 +524,7 @@ onUnmounted(() => {
 .fade-enter-from, .fade-leave-to { opacity: 0; }
 .fade-enter-to, .fade-leave-from { opacity: 1; }
 
-/* Greeting text */
+
 .greeting h1 {
   font-size: 4rem;
   font-weight: 700;
@@ -548,7 +539,7 @@ onUnmounted(() => {
   text-shadow: 1px 1px 6px rgba(0, 0, 0, 0.3);
 }
 
-/* Info bar under greeting (time, weather, location) */
+
 .info-bar {
   margin-top: 0.75rem;
   display: flex;
@@ -567,7 +558,7 @@ onUnmounted(() => {
   white-space: nowrap;
 }
 
-/* Scroll prompt */
+
 .scroll-prompt {
   position: absolute;
   bottom: 3rem;
@@ -591,14 +582,14 @@ onUnmounted(() => {
   color: #bef0dd;
 }
 
-/* Bounce animation */
+
 @keyframes bounce {
   0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
   40% { transform: translateY(10px); }
   60% { transform: translateY(5px); }
 }
 
-/* Dashboard section */
+
 .dashboard-section {
   padding: 3rem 1rem;
   background-color: #0e0d27;
@@ -612,7 +603,7 @@ onUnmounted(() => {
   margin-bottom: 1.25rem;
 }
 
-/* Standard card style for dashboard items */
+
 .card {
   border: none;
   border-radius: 15px;
@@ -631,7 +622,7 @@ onUnmounted(() => {
   font-size: 1.25rem;
 }
 
-/* Recommendations card */
+
 .recommendations-card {
   height: calc(100vh - 400px);
   min-height: 400px;
@@ -647,7 +638,7 @@ onUnmounted(() => {
   overflow: hidden;
 }
 
-/* Activity Carousel */
+
 .activity-carousel {
   position: relative;
   width: 100%;
@@ -693,7 +684,7 @@ onUnmounted(() => {
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15);
 }
 
-/* removed image styles as carousel shows text-only cards */
+
 
 .activity-card-content {
   padding: 0;
@@ -827,7 +818,7 @@ onUnmounted(() => {
   background: #B8F2E6;
 }
 
-/* Nearby places items */
+
 .place-item {
   background-color: #e1fffbd4;
   border-radius: 12px;
@@ -866,7 +857,7 @@ onUnmounted(() => {
   font-size: 0.85rem;
 }
 
-/* Buttons (standardized) */
+
 .btn-primary, .btn-generate, .btn-save {
   background-color: #AED9E0;
   border: none;

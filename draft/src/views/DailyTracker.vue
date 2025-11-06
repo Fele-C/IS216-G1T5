@@ -285,11 +285,11 @@ const loadActivities = async () => {
   id.value = authUser.user.id;
   const todayStr = today.toISOString().split('T')[0];
   
-  // Get today's day of week (1 = Monday, 7 = Sunday)
+  
   const todayDay = today.getDay();
   const dayOfWeek = todayDay === 0 ? 7 : todayDay; // Convert Sunday (0) to 7
 
-  // Calculate week start (Monday)
+  
   const weekStart = new Date(today);
   const diff = todayDay === 0 ? -6 : 1 - todayDay;
   weekStart.setDate(today.getDate() + diff);
@@ -299,7 +299,7 @@ const loadActivities = async () => {
   aList.value = await activityService.getActivityList();
   console.log("Activity List: ", aList.value);
 
-  // Load activities from weekly_plan for today
+  
   const { data: weeklyPlanActivities, error: weeklyError } = await supabase
     .from('weekly_plan')
     .select('*')
@@ -309,7 +309,7 @@ const loadActivities = async () => {
 
   console.log("Weekly plan activities for today:", weeklyPlanActivities);
 
-  // Load extra activities from daily_activity
+  
   week.value = await activityService.getActivitiesByWeek(authUser.user.id, todayStr);
   console.log("Week data:", week.value);
 
@@ -319,7 +319,7 @@ const loadActivities = async () => {
     console.log("Extra activities:", extraActivities);
   }
 
-  // Load activity logs for progress tracking
+  
   activities.value = await activityService.getCompletedActivitiesByDate(authUser.user.id, todayStr);
   console.log("Activity logs:", activities.value);
 
@@ -328,10 +328,10 @@ const loadActivities = async () => {
     percentage: a.percentage ?? 0
   }));
 
-  // Merge weekly plan activities with extra activities
+  
   const mergedActivities = [];
   
-  // Add weekly plan activities
+  
   if (weeklyPlanActivities && weeklyPlanActivities.length > 0) {
     weeklyPlanActivities.forEach(wp => {
       const match = activities.value.find(a => a.activity === wp.activity_name);
@@ -380,11 +380,11 @@ const updateActivityProgress = async (activity) => {
     const d = Math.round((activity.duration * activity.completion_percentage) / 100);
     const c = Math.round((activity.calories * activity.completion_percentage) / 100);
 
-    // Update local state immediately (optimistic update) for reactive UI
+    
     if (!match) {
-      // Create new activity log entry locally first
+      
       const newActivityLog = {
-        id: Date.now(), // Temporary ID
+        id: Date.now(), 
         date: today.toISOString().split('T')[0],
         activity: activity.activity,
         duration: d,
@@ -396,10 +396,10 @@ const updateActivityProgress = async (activity) => {
       };
       activities.value.push(newActivityLog);
       
-      // Update total calories immediately
+      
       totalCaloriesBurnt.value = calculateTotalCalories();
       
-      // Then save to database
+      
       const savedActivity = await activityService.createActivity({
         date: today.toISOString().split('T')[0],
         activity: activity.activity,
@@ -411,7 +411,7 @@ const updateActivityProgress = async (activity) => {
         percentage: activity.completion_percentage
       });
 
-      // Replace temporary entry with saved entry
+      
       if (savedActivity) {
         const tempIndex = activities.value.findIndex(a => a.id === newActivityLog.id);
         if (tempIndex !== -1) {
@@ -423,7 +423,7 @@ const updateActivityProgress = async (activity) => {
       return;
     }
 
-    // Update existing activity log entry locally first
+    
     const activityIndex = activities.value.findIndex(a => a.id === match.id);
     if (activityIndex !== -1) {
       activities.value[activityIndex] = {
@@ -434,10 +434,10 @@ const updateActivityProgress = async (activity) => {
       };
     }
 
-    // Update total calories immediately
+    
     totalCaloriesBurnt.value = calculateTotalCalories();
 
-    // Then save to database
+    
     await activityService.updateActivity(match.id, {
       duration: d,
       calories: c,
@@ -485,7 +485,7 @@ const addActivity = async () => {
 };
 
 const deleteActivity = async () => {
-  if (!activityToDelete.value) return; // safeguard
+  if (!activityToDelete.value) return; 
   console.log(activityToDelete.value)
   const match = activities.value.find(a => a.activity === activityToDelete.value.activity);
 
@@ -535,7 +535,7 @@ const saveEditedActivity = async () => {
     return;
   }
 
-  // Ensure proper data types
+  
   const duration = Math.round(Number(editedActivity.value.duration)) || 0;
   const caloriesBurnt = Math.round(match.met * 3.5 * user.weight / 200 * duration);
   const isOutdoor = editedActivity.value.is_outdoor ? 1 : 0; // Convert boolean to integer (0 or 1)
@@ -613,13 +613,13 @@ const saveEditedActivity = async () => {
         return;
       }
     } else {
-      // Fallback: try to determine source or update both
+      
       console.warn('Activity source not found, attempting to update both tables');
       alert('Unable to determine activity source. Please refresh the page and try again.');
       return;
     }
 
-    // Update activity in plan array
+    
     const index = plan.value.findIndex(a => a.id === activityToEdit.value.id);
     if (index !== -1) {
       plan.value[index] = {
