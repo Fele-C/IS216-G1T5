@@ -3,31 +3,27 @@
     <svg class="tree-svg" viewBox="0 0 300 400" xmlns="http://www.w3.org/2000/svg">
       <!-- Stage 1: Trunk only -->
       <g v-if="growthStage === 1">
-        <image href="./TreeImages/growthstage1.png" x="0" y="0" width="300" height="400" />
+        <image href="./TreeImages/tree1.png" x="0" y="0" width="300" height="400" />
       </g>
 
       <!-- Stage 2: Trunk + small foliage -->
       <g v-else-if="growthStage === 2">
-        <image href="./TreeImages/growthstage2.png" x="0" y="0" width="300" height="400" />
+        <image href="./TreeImages/tree2.png" x="0" y="0" width="300" height="400" />
       </g>
 
       <!-- Stage 3: Trunk + medium foliage -->
       <g v-else-if="growthStage === 3">
-        <image href="./TreeImages/growthstage3.png" x="0" y="0" width="300" height="400" />
+        <image href="./TreeImages/tree3.png" x="0" y="0" width="300" height="400" />
 
       </g>
 
       <!-- Stage 4: Trunk + full foliage -->
       <g v-else-if="growthStage === 4">
-        <image href="./TreeImages/growthstage4.png" x="0" y="0" width="300" height="400" />
+        <image href="./TreeImages/tree4.png" x="0" y="0" width="300" height="400" />
 
       </g>
 
-      <!-- Stage 5: Full tree + fruits -->
-      <g v-else-if="growthStage === 5">
-        <image href="./TreeImages/growthstage5.png" x="0" y="0" width="300" height="400" />
 
-      </g>
 
       <!-- Growth label -->
       <!-- <text x="150" y="390" text-anchor="middle" class="tree-text">
@@ -50,8 +46,8 @@ const growthStage = computed(() => {
   // 0-25%: seed (stage 1)
   // 25-50%: seedling (stage 2)
   // 50-75%: young tree (stage 3)
-  // 75-100%: full tree with fruits (stage 5)
-  if (props.growthPercentage >= 75) return 5; // Full tree with fruits
+  // 75-100%: full tree with fruits (stage 4)
+  if (props.growthPercentage >= 75) return 4; // Full tree with fruits
   if (props.growthPercentage >= 50) return 3; // Young tree
   if (props.growthPercentage >= 25) return 2; // Seedling
   return 1; // Seed
