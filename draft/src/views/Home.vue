@@ -116,6 +116,24 @@
                     <div class="place-info">
                       <h4>{{ place.name }}</h4>
                       <p>{{ place.location }}</p>
+
+                      <!-- <div class="place-info">
+                      <h4>{{ place.name }}</h4>
+                      <p>{{ place.location }}</p> -->
+
+                      <div v-if="place.weather" class="place-weather">
+                        <span>Weather: {{ place.weather.condition }}, {{ place.weather.temperature }}°C</span>
+                        <div class="suitable-for">
+                          🏋️ Suitable for:
+                        </div>
+                        <ul>
+                          <li v-for="activity in place.activities" :key="activity.name">{{ activity.name }}</li>
+                        </ul>
+                      </div>
+                      <div v-else class="place-weather">
+                        <span>Weather data unavailable</span>
+                      </div>
+
                     </div>
                     <div class="place-details">
                       <span class="badge">{{ place.price }}</span>
@@ -128,7 +146,7 @@
             </div>
           </div>
         </div>
-      </div>
+        </div>
     </section>
   </div>
 </template>
@@ -241,6 +259,28 @@ async function getCoordinatesFromAddress(address) {
   }
 }
 
+// const fetchNearbyPlaces = async () => {
+//   if (!userLocation.value) {
+//     alert('Please enter your location');
+//     return;
+//   }
+
+//   const coords = await getCoordinatesFromAddress(userLocation.value);
+//   if (!coords) {
+//     alert('Could not find location coordinates');
+//     return;
+//   }
+
+//   nearbyPlaces.value = await apiService.getNearbyPlaces(
+//     coords.lat,
+//     coords.lng,
+//     maxDistance.value,
+//     'park'
+//   );
+// };
+
+
+
 const fetchNearbyPlaces = async () => {
   if (!userLocation.value) {
     alert('Please enter your location');
@@ -253,12 +293,107 @@ const fetchNearbyPlaces = async () => {
     return;
   }
 
-  nearbyPlaces.value = await apiService.getNearbyPlaces(
+  // nearbyPlaces.value = await apiService.getNearbyPlaces(
+  //   coords.lat,
+  //   coords.lng,
+  //   maxDistance.value,
+  //   'park'
+  // );
+
+  // 2️⃣ Fetch nearby parks first
+  const places = await apiService.getNearbyPlaces(
     coords.lat,
     coords.lng,
     maxDistance.value,
     'park'
   );
+
+  // 2️⃣ For each place, fetch weather info
+  // const placesWithWeather = await Promise.all(
+  //   places.map(async (place) => {
+  //     try {
+  //       if (place.geometry?.location) {
+  //         const weatherData = await apiService.getWeatherData({
+  //           lat: place.geometry.location.lat,
+  //           lng: place.geometry.location.lng,
+  //         });
+  //         return { ...place, weather: weatherData };
+  //       } else {
+  //         // fallback if place doesn't have coords
+  //         return { ...place, weather: null };
+  //       }
+  //     } catch (error) {
+  //       console.error('Error fetching weather for place:', place.name, error);
+  //       return { ...place, weather: null };
+  //     }
+  //   })
+  // );
+
+  // nearbyPlaces.value = placesWithWeather;
+
+  // console.log('Nearby places fetched:', places); // DEBUG
+
+
+  function getRandomActivities(activities, count = 2) {
+    const shuffled = [...activities].sort(() => 0.5 - Math.random());
+    return shuffled.slice(0, count);
+  }
+
+
+  const placesWithWeather = await Promise.all(
+  places.map(async (place) => {
+    try {
+      // Use your geocode function to get lat/lng
+      const coords = await getCoordinatesFromAddress(place.location);
+
+      if (!coords) {
+        return { ...place, weather: null };
+      }
+
+      const weatherData = await apiService.getWeatherData({
+        lat: coords.lat,
+        lng: coords.lng,
+      });
+
+      // Normalize response
+      const normalizedWeather = weatherData
+        ? {
+            temperature: weatherData.temperature ?? weatherData.temp,
+            condition: weatherData.condition ?? weatherData.weather,
+            feelsLike: weatherData.feels_like ?? weatherData.feelsLike,
+            uvIndex: weatherData.uv_index ?? weatherData.uvIndex,
+          }
+        : null;
+
+    //   return { ...place, weather: normalizedWeather };
+    // } catch (error) {
+    //   console.error('Error fetching weather for place:', place.name, error);
+    //   return { ...place, weather: null };
+    // }
+    // Fetch recommended activities based on weather (assuming outdoor)
+      // const recommendedActivities = normalizedWeather
+      const placeRecommended = normalizedWeather
+        ? await apiService.getRecommendedActivities(normalizedWeather, null, true)
+        : [];
+
+      // Pick the first 2 activities
+      // const activities = recommendedActivities.slice(0, 2);
+      const activities = getRandomActivities(placeRecommended, 2);
+
+      return { ...place, weather: normalizedWeather, activities };
+    } catch (error) {
+      console.error('Error fetching weather for place:', place.name, error);
+      return { ...place, weather: null, activities: [] };
+    }
+  })
+);
+placesWithWeather.sort((a, b) => {
+  const distA = parseFloat(a.distanceKm);
+  const distB = parseFloat(b.distanceKm);
+  return distA - distB; // ascending order
+});
+
+nearbyPlaces.value = placesWithWeather;
 };
 
 // Activity carousel functions
@@ -345,6 +480,8 @@ onMounted(async () => {
     user?.goal || 'maintain',
     weather.value.isOutdoorSafe
   );
+
+  console.log("Activities fetched:", recommendedActivities.value);
   
   // Start carousel after activities are loaded
   startCarousel();

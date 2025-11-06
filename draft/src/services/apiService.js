@@ -490,7 +490,8 @@ export const apiService = {
     if(isOutdoor){
       return activities;
     }
-    return [];
+    // return [];
+    return activities;
 
     
   }
