@@ -4,7 +4,7 @@
       <h1 class="page-title">Your Profile</h1>
 
       <div class="row">
-        <div class="col-lg-6 mb-3">
+        <div class="col-lg-8 col-md-10 mx-auto mb-3">
           <div class="card stats-card">
             <div class="card-body">
               <div class="card-header-section">
@@ -83,7 +83,7 @@
       </div>
 
       <div class="row">
-        <div class="col-12">
+        <div class="col-lg-8 col-md-10 mx-auto">
           <div class="card bmi-meter-card">
             <div class="card-body">
               <h3>BMI Status</h3>

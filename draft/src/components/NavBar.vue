@@ -4,7 +4,7 @@
   >
     <div class="container-fluid">
       <router-link to="/" class="navbar-brand">
-        <img src="/logofull.png" alt="HealthTracker" style="height: 40px;" />
+        <img src="/newlogofull.jpg" alt="HealthTracker" style="height: 40px;" />
       </router-link>
       <button
         class="navbar-toggler"
