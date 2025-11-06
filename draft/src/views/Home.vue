@@ -357,6 +357,11 @@ const fetchNearbyPlaces = async () => {
     }
   })
 );
+placesWithWeather.sort((a, b) => {
+  const distA = parseFloat(a.distanceKm);
+  const distB = parseFloat(b.distanceKm);
+  return distA - distB; // ascending order
+});
 
 nearbyPlaces.value = placesWithWeather;
 
