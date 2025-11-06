@@ -20,7 +20,6 @@
           :key="index"
           class="activity-day-card"
           :class="{ 'no-activity': !day.activity }"
-          @click="!day.activity && addActivity(day)"
         >
           <h3 class="day-name">{{ day.name }}</h3>
           <div v-if="day.activity" class="activity-details">
@@ -38,7 +37,7 @@
             </p>
           </div>
           <div v-else class="no-activity-text">
-            Click to add activity
+            No activities planned here!
           </div>
         </div>
       </div>
@@ -149,16 +148,6 @@ const loadWeeklyPlan = async () => {
 const navigateWeek = (direction) => {
   currentWeekOffset.value += direction;
   loadWeeklyPlan();
-};
-
-// Add activity locally (optional - can be removed if you don't want this feature)
-const addActivity = (day) => {
-  const name = prompt(`Enter activity for ${day.name}:`);
-  if (!name) return;
-  const duration = parseInt(prompt('Duration (minutes):'), 10) || 0;
-  const calories = parseInt(prompt('Estimated calories:'), 10) || 0;
-
-  day.activity = { name, duration, estimated_calories: calories };
 };
 
 onMounted(() => {

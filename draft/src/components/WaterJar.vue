@@ -50,8 +50,8 @@
     </svg>
 
     <div class="jar-label">
-      <!-- <p><strong>{{ currentCalories }}</strong> / {{ goalCalories }} kcal</p> -->
-      <p><strong>{{ currentCalories }}</strong> / 853 kcal</p>
+      <p><strong>{{ currentCalories }}</strong> / {{ goalCalories }} kcal</p>
+      <!-- <p><strong>{{ currentCalories }}</strong> / 853 kcal</p> -->
     </div>
   </div>
 </template>
