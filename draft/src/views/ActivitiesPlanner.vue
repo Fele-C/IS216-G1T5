@@ -79,13 +79,6 @@
                         {{ plan.is_outdoor ? '☀️ Outdoor' : '🏠 Indoor' }}
                       </span>
                     </div>
-                    <button
-                      @click="viewLocations(plan)"
-                      class="btn-view-locations"
-                      v-if="plan.is_outdoor"
-                    >
-                      📍 View Locations
-                    </button>
                   </div>
   
                   <div class="plan-details">
@@ -128,34 +121,27 @@
           </div>
         </div>
       </div>
-  
-      <!-- Location Modal -->
-      <div v-if="selectedPlanForLocations" class="modal-overlay" @click="selectedPlanForLocations = null">
-        <div class="modal-content" @click.stop>
-          <h3>Nearby Locations for {{ selectedPlanForLocations.activity_name }}</h3>
-          <div class="locations-list">
-            <p class="info-text">
-              Use Google Maps or your preferred navigation app to find nearby locations for this activity.
-            </p>
-            <div class="location-suggestions">
-              <div class="location-item"><h5>Parks & Recreation Areas</h5><p>Search for parks and outdoor areas.</p></div>
-              <div class="location-item"><h5>Fitness Centers</h5><p>Find gyms and studios near you.</p></div>
-              <div class="location-item"><h5>Community Centers</h5><p>Check indoor facilities in your area.</p></div>
-            </div>
-          </div>
-          <button @click="selectedPlanForLocations = null" class="btn btn-close-locations">Close</button>
+
+      <!-- Success Modal -->
+      <div v-if="showSuccessModal" class="modal-overlay" @click="closeSuccessModal">
+        <div class="modal-content success-modal" @click.stop>
+          <div class="success-icon">✅</div>
+          <h3>Plan Saved Successfully!</h3>
+          <p>Your weekly plan has been saved and added to your schedule.</p>
+          <button @click="closeSuccessModal" class="btn btn-success-close">Continue</button>
         </div>
       </div>
     </div>
   </template>
   
   <script setup>
-  import { ref, computed, onMounted, nextTick } from 'vue';
+  import { ref, computed, onMounted } from 'vue';
   import { useRouter } from 'vue-router';
   import { weeklyPlanService } from '../services/weeklyPlanService.js';
   import { apiService } from '../services/apiService.js';
   import { userService } from '../services/userService.js';
   import { supabase } from '../lib/supabase.js';
+  import axios from 'axios';
 
   const router = useRouter();
   
@@ -166,10 +152,25 @@
   const userLocation = ref('');
   const isGenerating = ref(false);
   const generatedPlan = ref([]);
-  const selectedPlanForLocations = ref(null);
-  const map = ref(null);
-  const mapContainer = ref(null);
   const activityCatalog = ref([]); // [{ name, met, location_type }]
+  const showSuccessModal = ref(false);
+
+  const GOOGLE_PLACES_API_KEY = import.meta.env.VITE_GOOGLE_PLACES_API_KEY || import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '';
+
+  const getCoordinatesFromAddress = async (address) => {
+    try {
+      if (!address) return null;
+      const resp = await axios.get('https://maps.googleapis.com/maps/api/geocode/json', {
+        params: { address, key: GOOGLE_PLACES_API_KEY }
+      });
+      const results = resp?.data?.results || [];
+      if (!results.length) return null;
+      return results[0].geometry?.location || null;
+    } catch (e) {
+      console.error('Geocoding failed:', e);
+      return null;
+    }
+  };
   
   // Calculate current week's dates (Monday to Sunday)
   const daysOfWeekWithDates = computed(() => {
@@ -234,39 +235,28 @@
     return todayWeather || { temp: 28, uv: 4, conditions: 'Sunny', isOutdoorSafe: true };
   };
   
-  // Recommend activities from Supabase activity_list (name, met, location_type)
-  const recommendActivities = (weatherData) => {
-    let filtered = activityCatalog.value;
+  // Recommend activities ensuring suitability for location type and forecast
+  // opts: { activityType: 'outdoor'|'indoor'|'' , isOutdoorSafe: boolean }
+  const recommendActivities = (opts) => {
+    const { activityType: prefType = '', isOutdoorSafe = true } = opts || {};
+    let pool = activityCatalog.value || [];
 
-    // Filter by user preference (activityType) - strict matching
-    if (activityType.value === 'outdoor') {
-      if (weatherData?.isOutdoorSafe) {
-        // Weather is good: show ONLY activities with location_type = 'Outdoor'
-        filtered = filtered.filter(a => a.location_type === 'Outdoor');
-      } else {
-        // Weather is bad: show indoor activities instead (with note that weather isn't suitable for outdoor)
-        filtered = activityCatalog.value.filter(a => 
-          a.location_type === 'Indoor' || a.location_type === 'Any'
-        );
-      }
-    } else if (activityType.value === 'indoor') {
-      // User wants indoor only: show ONLY activities with location_type = 'Indoor'
-      filtered = filtered.filter(a => 
-        a.location_type === 'Indoor' || a.location_type === 'Any'
-      );
+    if (prefType === 'outdoor') {
+      // If user wants outdoor: only suggest Outdoor when weather is safe; otherwise prefer Indoor/Any
+      pool = isOutdoorSafe
+        ? pool.filter(a => a.location_type === 'Outdoor')
+        : pool.filter(a => a.location_type === 'Indoor' || a.location_type === 'Any');
+    } else if (prefType === 'indoor') {
+      // Explicit indoor preference regardless of weather
+      pool = pool.filter(a => a.location_type === 'Indoor' || a.location_type === 'Any');
     } else {
-      // User selected "Any": show all activities, but filter out strictly outdoor if weather is bad
-      if (!weatherData?.isOutdoorSafe) {
-        filtered = filtered.filter(a => a.location_type !== 'Outdoor');
-      }
+      // Any: allow all when safe, otherwise avoid strict Outdoor
+      pool = isOutdoorSafe ? pool : pool.filter(a => a.location_type !== 'Outdoor');
     }
 
-    // Ensure non-empty - fallback to all activities if filtering removed everything
-    if (filtered.length === 0) {
-      filtered = activityCatalog.value;
-    }
-
-    return filtered;
+    // Fallback to full catalog if filter removed everything
+    if (!pool || pool.length === 0) return activityCatalog.value || [];
+    return pool;
   };
   
   // Generate weekly plan using activity_list MET values
@@ -310,23 +300,18 @@
       const weatherData = await getWeatherDataNew(userLocation.value || 'Singapore');
       console.log('📊 ActivitiesPlanner: Current weather received:', weatherData);
       const caloriesPerDay = Math.round(weeklyCalorieGoal.value / selectedDays.value.length);
-      const activities = recommendActivities(weatherData);
+      const basePool = recommendActivities({
+        activityType: activityType.value,
+        isOutdoorSafe: !!(weatherData && weatherData.isOutdoorSafe)
+      });
 
-      if (!activities || activities.length === 0) {
+      if (!basePool || basePool.length === 0) {
         alert('No activities available with the current filters and weather. Try changing preferences.');
         return;
       }
 
-      // Generate one activity per selected day
-      generatedPlan.value = selectedDays.value.map((i, idx) => {
-        const a = activities[idx % activities.length];
-        const met = Number(a.met) || 0;
-        const weight = Number(user?.weight) || 70; // fallback weight if missing
-        const caloriesPerMinute = met > 0 ? (met * 3.5 * weight) / 200 : 0;
-        const duration = caloriesPerMinute > 0
-          ? Math.max(20, Math.min(120, Math.round(caloriesPerDay / caloriesPerMinute)))
-          : 45; // sensible default
-
+      // Generate one activity per selected day, filtering by that day's forecast suitability
+      const plans = await Promise.all(selectedDays.value.map(async (i, idx) => {
         // Get forecast for this specific day
         const dayDate = daysOfWeekWithDates.value[i].fullDate;
         const dateKey = dayDate.toISOString().split('T')[0];
@@ -338,7 +323,24 @@
           forecast: dayForecast
         });
 
-        // Determine indoor/outdoor flag based on location_type and forecast weather
+        // Build day-specific pool based on user preference and this day's forecast
+        const dayIsOutdoorSafe = (dayForecast && typeof dayForecast?.isOutdoorSafe === 'boolean')
+          ? !!dayForecast.isOutdoorSafe
+          : !!(weatherData && weatherData.isOutdoorSafe);
+        let dayPool = recommendActivities({ activityType: activityType.value, isOutdoorSafe: dayIsOutdoorSafe });
+        if (!dayPool || dayPool.length === 0) {
+          dayPool = activityCatalog.value || [];
+        }
+        const a = dayPool[idx % dayPool.length];
+
+        const met = Number(a.met) || 0;
+        const weight = Number(user?.weight) || 70; // fallback weight if missing
+        const caloriesPerMinute = met > 0 ? (met * 3.5 * weight) / 200 : 0;
+        const duration = caloriesPerMinute > 0
+          ? Math.max(20, Math.min(120, Math.round(caloriesPerDay / caloriesPerMinute)))
+          : 45; // sensible default
+
+        // Determine indoor/outdoor flag based on chosen activity's location_type and forecast
         let isOutdoor = false;
         let weatherWarning = null;
         let forecastWeather = null;
@@ -383,17 +385,50 @@
         } else {
           console.log(`   ⚠️ No forecast available for ${dateKey}, using current weather fallback`);
           // Fallback to current weather if forecast not available
-          if (a.location_type === 'Outdoor') {
-            isOutdoor = true;
-          } else if (a.location_type === 'Any') {
-            isOutdoor = weatherData?.isOutdoorSafe || false;
-          } else if (a.location_type === 'Indoor') {
-            isOutdoor = false;
-          }
+        if (a.location_type === 'Outdoor') {
+          isOutdoor = true;
+        } else if (a.location_type === 'Any') {
+          isOutdoor = weatherData?.isOutdoorSafe || false;
+        } else if (a.location_type === 'Indoor') {
+          isOutdoor = false;
+        }
 
-          // Add weather warning if user selected outdoor but weather forced indoor activities
+        // Add weather warning if user selected outdoor but weather forced indoor activities
           if (activityType.value === 'outdoor' && !weatherData?.isOutdoorSafe && !isOutdoor) {
             weatherWarning = 'Weather conditions are not suitable for outdoor activities';
+          }
+        }
+
+        // Resolve location suggestion based on activity type and forecast
+        let suggestedLocation = userLocation.value || '';
+        const isHiking = typeof a?.name === 'string' && a.name.toLowerCase() === 'hiking';
+
+        // Determine if this day we intend to perform the activity outdoors
+        const willBeOutdoors = a?.location_type === 'Outdoor' || (a?.location_type === 'Any' && dayIsOutdoorSafe);
+
+        if (!willBeOutdoors) {
+          // Any indoor-capable activity or unsafe outdoor day → suggest indoor location
+          suggestedLocation = 'Anywhere safe and well-ventilated indoors';
+        } else if (isHiking) {
+          suggestedLocation = 'Nearest hiking trail';
+        } else {
+          // Outdoor and not hiking → find nearest park, with robust fallbacks
+          let coords = await getCoordinatesFromAddress(userLocation.value);
+          if (!coords) {
+            // Fallback to Singapore CBD coords if geocoding or API key not available
+            coords = { lat: 1.3521, lng: 103.8198 };
+          }
+          try {
+            const places = await apiService.getNearbyPlaces(coords.lat, coords.lng, 5, 'park');
+            if (Array.isArray(places) && places.length > 0) {
+              const p = places[0];
+              suggestedLocation = p.name || p.vicinity || p.formatted_address || 'Nearby park';
+            } else {
+              suggestedLocation = 'Nearby park';
+            }
+          } catch (e) {
+            console.warn('Nearby places lookup failed, using fallback:', e);
+            suggestedLocation = 'Nearby park';
           }
         }
 
@@ -402,7 +437,7 @@
           activity_name: a.name,
           duration,
           estimated_calories: caloriesPerDay,
-          location: userLocation.value || 'Singapore',
+          location: suggestedLocation || (userLocation.value || 'Singapore'),
           is_outdoor: isOutdoor,
           weather_warning: weatherWarning,
           forecast: forecastWeather
@@ -411,7 +446,8 @@
         console.log(`   ✅ Created plan entry for day ${i + 1}:`, planEntry);
         
         return planEntry;
-      });
+      }));
+      generatedPlan.value = plans;
       
       console.log('📋 ActivitiesPlanner: Generated plan complete:', generatedPlan.value);
     } catch (e) {
@@ -524,10 +560,9 @@
       }
 
       console.log('✅ Plans saved successfully:', data);
-      alert('Plan saved successfully!');
       
-      // Redirect to Activities Overview
-      router.push({ name: 'activities' });
+      // Show success modal
+      showSuccessModal.value = true;
     } catch (error) {
       console.error('❌ Exception saving plan:', error);
       console.error('❌ Full exception object:', JSON.stringify(error, null, 2));
@@ -540,36 +575,10 @@
     }
   };
 
-  //  Google Maps: nearby locations
-  const viewLocations = async (plan) => {
-    selectedPlanForLocations.value = plan;
-    await nextTick();
-    if (!mapContainer.value) return;
-  
-    const geocoder = new google.maps.Geocoder();
-    geocoder.geocode({ address: plan.location }, (results, status) => {
-      if (status === 'OK' && results[0]) {
-        const center = results[0].geometry.location;
-        map.value = new google.maps.Map(mapContainer.value, { center, zoom: 14 });
-  
-        new google.maps.Marker({ position: center, map: map.value, title: plan.location });
-  
-        const service = new google.maps.places.PlacesService(map.value);
-        service.nearbySearch({
-          location: center,
-          radius: 3000,
-          keyword: plan.activity_name
-        }, (results, status) => {
-          if (status === google.maps.places.PlacesServiceStatus.OK) {
-            results.forEach(place => new google.maps.Marker({
-              position: place.geometry.location,
-              map: map.value,
-              title: place.name
-            }));
-          }
-        });
-      }
-    });
+  // Close success modal and redirect to Activities Overview
+  const closeSuccessModal = () => {
+    showSuccessModal.value = false;
+    router.push({ name: 'activities' });
   };
 
   // Load activities catalog from Supabase activity_list
@@ -792,6 +801,51 @@
     border-radius: 12px;
     width: 90%;
     max-width: 600px;
+  }
+
+  .success-modal {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .success-icon {
+    font-size: 4rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .success-modal h3 {
+    color: #4A4A6A;
+    font-weight: 700;
+    margin: 0;
+    border: none;
+    padding: 0;
+  }
+
+  .success-modal p {
+    color: #666;
+    margin: 0;
+    font-size: 1rem;
+  }
+
+  .btn-success-close {
+    background-color: #AED9E0;
+    border: none;
+    padding: 0.75rem 2rem;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 1rem;
+    color: #4A4A6A;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-top: 0.5rem;
+  }
+
+  .btn-success-close:hover {
+    background-color: #B8F2E6;
+    transform: scale(1.05);
   }
   </style>
   

@@ -15,12 +15,15 @@
         <div class="greeting">
           <h1>{{ greeting }}</h1>
           <h2>Welcome, {{ userName }}</h2>
+          <h2> Time to turn those goals into gains! </h2>
         </div>
 
         <!-- Info bar: time, weather, location -->
         <div class="info-bar">
           <span>⏰ {{ currentTime }}</span>
-          <span>☀️ {{ weather.condition }}, {{ weather.temperature }}°C</span>
+          <span>☀️ {{ weather.condition }}</span>
+          <span>🌡️ Feels Like: {{ weather.feelsLike }}°C</span>
+          <span>🕶️ UV Index: {{ weather.uvIndex }}</span>
           <span>📍 {{ userLocation || 'Unknown' }}</span>
         </div>
 
@@ -36,48 +39,55 @@
       <div class="container">
         <h2>Today's Dashboard</h2>
 
-        <!-- Weather and Activities -->
+        <!-- Activities + Nearby Places side by side -->
         <div class="row mt-4">
-          <div class="col-md-6 mb-4">
-            <div class="card weather-card">
-              <div class="card-body">
-                <h3>Weather Conditions</h3>
-                <div class="weather-info">
-                  <div class="weather-icon">☀️</div>
-                  <div class="weather-details">
-                    <p><strong>Temperature:</strong> {{ weather.temperature }}°C</p>
-                    <p><strong>Feels Like:</strong> {{ weather.feelsLike }}°C</p>
-                    <p><strong>UV Index:</strong> {{ weather.uvIndex }}</p>
-                    <p><strong>Condition:</strong> {{ weather.condition }}</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
           <div class="col-md-6 mb-4">
             <div class="card recommendations-card">
               <div class="card-body">
                 <h3>Recommended Activities</h3>
-                <div class="activity-list">
-                  <div
-                    v-for="(activity, index) in recommendedActivities"
-                    :key="index"
-                    class="activity-item"
-                  >
-                    <span class="activity-name">{{ activity.name }}</span>
-                    <br>
-                    <span class="activity-calories">{{ activity.caloriesPerHour }} kcal/hr</span>
+                <div class="activity-carousel">
+                  <div class="carousel-container">
+                    <button 
+                      @click="previousActivity" 
+                      class="carousel-btn carousel-btn-prev"
+                    >
+                      ‹
+                    </button>
+                    <div class="carousel-track" :style="{ transform: `translateX(-${currentActivityIndex * 100}%)` }">
+                      <div
+                        v-for="(activity, index) in recommendedActivities"
+                        :key="index"
+                        class="activity-card"
+                      >
+                        <div class="activity-card-content">
+                          <h4 class="activity-name">{{ activity.name }}</h4>
+                          <p class="activity-encouragement">{{ getEncouragement(activity.name) }}</p>
+                          <p class="activity-calories">{{ activity.caloriesPerHour }} kcal/hr</p>
+                        </div>
+                      </div>
+                    </div>
+                    <button 
+                      @click="nextActivity" 
+                      class="carousel-btn carousel-btn-next"
+                    >
+                      ›
+                    </button>
+                  </div>
+                  <div class="carousel-indicators">
+                    <span
+                      v-for="(activity, index) in recommendedActivities"
+                      :key="index"
+                      class="indicator"
+                      :class="{ active: currentActivityIndex === index }"
+                      @click="currentActivityIndex = index"
+                    ></span>
                   </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
 
-        <!-- Nearby Places -->
-        <div class="row mt-4">
-          <div class="col-12">
+          <div class="col-md-6 mb-4">
             <div class="card nearby-places-card">
               <div class="card-body">
                 <h3>Nearby Outdoor Activities</h3>
@@ -97,7 +107,7 @@
                   <button @click="fetchNearbyPlaces" class="btn btn-primary">Search</button>
                 </div>
 
-                <div class="places-list">
+                <div class="places-list scrollable">
                   <div
                     v-for="(place, index) in nearbyPlaces"
                     :key="index"
@@ -124,16 +134,17 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { userService } from '../services/userService.js';
 import { apiService } from '../services/apiService.js';
 
 const userName = ref('User');
 const userLocation = ref('');
 const maxDistance = ref(5);
-const weather = ref({ temperature: 25, uvIndex: 5, condition: 'Sunny', isOutdoorSafe: true });
+const weather = ref({ temperature: 25, feelsLike: 27, uvIndex: 5, condition: 'Sunny', isOutdoorSafe: true });
 const recommendedActivities = ref([]);
 const nearbyPlaces = ref([]);
+const currentActivityIndex = ref(0);
 
 const greeting = computed(() => {
   const hour = new Date().getHours();
@@ -142,13 +153,13 @@ const greeting = computed(() => {
   return 'Good Evening';
 });
 
-// Fade-in/fade-out images
+// Fade-in/fade-out images (served from public/images)
 const images = [
-  'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=1920&q=80', // Person running in nature
-  'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=1920&q=80', // Outdoor yoga/fitness
-  'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=1920&q=80', // Mountain hiking
-  'https://images.unsplash.com/photo-1517838277536-f5f99be501cd?w=1920&q=80', // Outdoor workout
-  'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=1920&q=80'  // Trail running
+  '/images/men-exercise-by-running-road-bridge.jpg',
+  '/images/young-sportive-couple-doing-yoga-fitness-people-summer-park.jpg',
+  '/images/hiker-friends-forest.jpg',
+  '/images/full-shot-family-cycling-outdoors.jpg',
+  '/images/fit-swimmer-training-swimming-pool-professional-male-swimmer-inside-swimming-pool.jpg'
 ];
 const currentImage = ref(0);
 onMounted(() => {
@@ -250,6 +261,70 @@ const fetchNearbyPlaces = async () => {
   );
 };
 
+// Activity carousel functions
+const nextActivity = () => {
+  if (recommendedActivities.value.length === 0) return;
+  currentActivityIndex.value = (currentActivityIndex.value + 1) % recommendedActivities.value.length;
+};
+
+const previousActivity = () => {
+  if (recommendedActivities.value.length === 0) return;
+  currentActivityIndex.value = currentActivityIndex.value === 0 
+    ? recommendedActivities.value.length - 1 
+    : currentActivityIndex.value - 1;
+};
+
+// Auto-scroll carousel
+let carouselInterval = null;
+
+const startCarousel = () => {
+  if (carouselInterval) clearInterval(carouselInterval);
+  if (recommendedActivities.value.length <= 1) return;
+  
+  carouselInterval = setInterval(() => {
+    nextActivity();
+  }, 4000); // Change slide every 4 seconds
+};
+
+const stopCarousel = () => {
+  if (carouselInterval) {
+    clearInterval(carouselInterval);
+    carouselInterval = null;
+  }
+};
+
+// Get encouragement message for activity
+const getEncouragement = (activityName) => {
+  const encouragements = {
+    'Running': 'Push your limits and feel the burn!',
+    'Jogging': 'Every step brings you closer to your goals!',
+    'Cycling': 'Pedal your way to a healthier you!',
+    'Swimming': 'Dive in and make a splash!',
+    'Hiking': 'Explore nature and conquer new heights!',
+    'Walking': 'A journey of a thousand miles begins with one step!',
+    'Yoga': 'Find your inner peace and strength!',
+    'Tennis': 'Serve, volley, and ace your fitness goals!',
+    'Basketball': 'Shoot for the stars and score big!',
+    'Soccer': 'Kick your way to better health!',
+    'Volleyball': 'Spike your way to success!',
+    'Badminton': 'Rally on and stay active!',
+    'Dancing': 'Move to the rhythm and feel alive!',
+    'Rowing': 'Row your way to peak fitness!',
+    'Skating': 'Glide smoothly toward your goals!',
+    'Golf': 'Swing into a healthier lifestyle!'
+  };
+  
+  // Try to find a match (case-insensitive)
+  const normalizedName = activityName?.toLowerCase() || '';
+  for (const [key, value] of Object.entries(encouragements)) {
+    if (normalizedName.includes(key.toLowerCase())) {
+      return value;
+    }
+  }
+  
+  return 'You\'ve got this! Keep moving forward!';
+};
+
 onMounted(async () => {
   const user = await userService.getCurrentUser();
   if (user) userName.value = user.name || 'User';
@@ -269,13 +344,15 @@ onMounted(async () => {
     weather.value,
     user?.goal || 'maintain',
     weather.value.isOutdoorSafe
-
-  // weather.value = await apiService.getWeatherData('default') || weather.value;
-  // recommendedActivities.value = await apiService.getRecommendedActivities(
-  //   weather.value,
-  //   user?.goal || 'maintain',
-  //   weather.value.isOutdoorSafe
   );
+  
+  // Start carousel after activities are loaded
+  startCarousel();
+});
+
+// Cleanup on unmount
+onUnmounted(() => {
+  stopCarousel();
 });
 </script>
 
@@ -339,9 +416,10 @@ onMounted(async () => {
   margin-top: 0.75rem;
   display: flex;
   justify-content: center;
-  gap: 1.5rem;
+  flex-wrap: wrap;
+  gap: 1rem;
   font-weight: 500;
-  font-size: 1rem;
+  font-size: 0.95rem;
   color: #f2fffa;
 }
 
@@ -349,6 +427,7 @@ onMounted(async () => {
   display: flex;
   align-items: center;
   gap: 0.3rem;
+  white-space: nowrap;
 }
 
 /* Scroll prompt */
@@ -415,26 +494,207 @@ onMounted(async () => {
   font-size: 1.25rem;
 }
 
-/* Activity items */
-.activity-item {
-  background-color: #e1fffbd4;
-  border-radius: 12px;
-  padding: 1rem;
-  margin-bottom: 0.5rem;
-  transition: transform 0.3s ease;
-  font-weight: 600;
-  color: #4A4A6A;
+/* Recommendations card */
+.recommendations-card {
+  height: calc(100vh - 400px);
+  min-height: 400px;
+  max-height: 600px;
+  display: flex;
+  flex-direction: column;
 }
 
-.activity-item:hover {
-  transform: translateY(-3px);
+.recommendations-card .card-body {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* Activity Carousel */
+.activity-carousel {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.carousel-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  flex: 1;
+  min-height: 0;
+}
+
+.carousel-track {
+  display: flex;
+  transition: transform 0.5s ease-in-out;
+  width: 100%;
+}
+
+.activity-card {
+  min-width: 100%;
+  height: 100%;
+  background-color: #e1fffbd4;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 3rem;
+}
+
+.activity-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15);
+}
+
+/* removed image styles as carousel shows text-only cards */
+
+.activity-card-content {
+  padding: 0;
+  text-align: center;
+  width: 100%;
+}
+
+.activity-card-content .activity-name {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #4A4A6A;
+  margin-bottom: 1rem;
+  line-height: 1.2;
+}
+
+.activity-card-content .activity-encouragement {
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: #5ba294;
+  margin-bottom: 1.5rem;
+  font-style: italic;
+  line-height: 1.4;
+}
+
+.activity-card-content .activity-calories {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #4A4A6A;
+  margin: 0;
+}
+
+.carousel-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background-color: rgba(174, 217, 224, 0.9);
+  border: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  font-size: 2rem;
+  color: #4A4A6A;
+  cursor: pointer;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  font-weight: bold;
+  line-height: 1;
+}
+
+.carousel-btn:hover:not(:disabled) {
+  background-color: #AED9E0;
+  transform: translateY(-50%) scale(1.1);
+}
+
+
+.carousel-btn-prev {
+  left: 10px;
+}
+
+.carousel-btn-next {
+  right: 10px;
+}
+
+.carousel-indicators {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.indicator {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background-color: rgba(174, 217, 224, 0.5);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.indicator.active {
+  background-color: #AED9E0;
+  transform: scale(1.2);
+}
+
+.indicator:hover {
+  background-color: #B8F2E6;
+}
+
+/* Nearby places card */
+.nearby-places-card {
+  height: calc(100vh - 400px);
+  min-height: 400px;
+  max-height: 600px;
+  display: flex;
+  flex-direction: column;
+}
+
+.nearby-places-card .card-body {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+.places-list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 0.5rem;
+}
+
+.places-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.places-list::-webkit-scrollbar-track {
+  background: rgba(174, 217, 224, 0.2);
+  border-radius: 10px;
+}
+
+.places-list::-webkit-scrollbar-thumb {
+  background: #AED9E0;
+  border-radius: 10px;
+}
+
+.places-list::-webkit-scrollbar-thumb:hover {
+  background: #B8F2E6;
 }
 
 /* Nearby places items */
 .place-item {
   background-color: #e1fffbd4;
   border-radius: 12px;
-  padding: 1rem;
+  padding: 0.75rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -442,6 +702,18 @@ onMounted(async () => {
   transition: transform 0.3s ease;
   font-weight: 500;
   color: #4A4A6A;
+  font-size: 0.9rem;
+}
+
+.place-item h4 {
+  font-size: 1rem;
+  margin: 0 0 0.25rem 0;
+}
+
+.place-item p {
+  font-size: 0.85rem;
+  margin: 0;
+  color: #7a8d85;
 }
 
 .place-item:hover {

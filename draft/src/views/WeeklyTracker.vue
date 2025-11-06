@@ -4,9 +4,9 @@
       <h1 class="page-title">Weekly Tracker</h1>
       <p class="page-subtitle">Week of {{ weekStartFormatted }}</p>
 
-      <div class="row">
+      <div class="row align-items-stretch">
         <div class="col-lg-6 mb-4">
-          <div class="tree-section">
+          <div class="tree-section equal-height">
             <h3>Tree of the Week</h3>
             <TreeAnimation :growth-percentage="weeklyGrowthPercentage" :tree-color="treeColor" />
 
@@ -36,7 +36,7 @@
         </div>
 
         <div class="col-lg-6 mb-4">
-          <div class="card daily-progress-card">
+          <div class="card daily-progress-card equal-height">
             <div class="card-body">
               <h3>Daily Progress</h3>
 
@@ -67,87 +67,6 @@
           </div>
         </div>
       </div>
-
-      <div class="row mt-4">
-        <div class="col-12">
-          <div class="card forest-card">
-            <div class="card-body">
-              <h3>Your Forest Collection</h3>
-
-              <div v-if="treeCollection.length === 0" class="no-trees">
-                <p>No trees yet. Complete your first week to grow your forest!</p>
-              </div>
-
-              <div v-else class="trees-grid">
-                <div
-                  v-for="tree in treeCollection"
-                  :key="tree.id"
-                  class="tree-card"
-                  :class="{ 'fully-grown': tree.is_fully_grown }"
-                  @click="selectedTree = tree"
-                >
-                  <div class="tree-preview">
-                    <TreeAnimation
-                      :growth-percentage="tree.growth_percentage"
-                      :tree-color="tree.color"
-                    />
-                  </div>
-                  <div class="tree-card-info">
-                    <h5>{{ tree.tree_name }}</h5>
-                    <p class="tree-week">{{ formatTreeWeek(tree.week_start_date) }}</p>
-                    <p class="tree-calories">{{ tree.total_calories_burnt }} kcal</p>
-                    <span
-                      class="tree-badge"
-                      :class="{ complete: tree.is_fully_grown }"
-                    >
-                      {{ tree.is_fully_grown ? '✓ Complete' : '◐ Partial' }}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div v-if="selectedTree" class="modal-overlay" @click="selectedTree = null">
-      <div class="modal-content tree-detail-modal" @click.stop>
-        <button class="btn-close-modal" @click="selectedTree = null">×</button>
-        <h3>{{ selectedTree.tree_name }}</h3>
-
-        <div class="tree-detail-content">
-          <TreeAnimation
-            :growth-percentage="selectedTree.growth_percentage"
-            :tree-color="selectedTree.color"
-          />
-
-          <div class="tree-details">
-            <div class="detail-row">
-              <span class="label">Week:</span>
-              <span class="value">{{ formatTreeWeek(selectedTree.week_start_date) }}</span>
-            </div>
-            <div class="detail-row">
-              <span class="label">Total Calories:</span>
-              <span class="value">{{ selectedTree.total_calories_burnt }} kcal</span>
-            </div>
-            <div class="detail-row">
-              <span class="label">Growth:</span>
-              <span class="value">{{ selectedTree.growth_percentage }}%</span>
-            </div>
-            <div class="detail-row">
-              <span class="label">Size:</span>
-              <span class="value">{{ selectedTree.size }}</span>
-            </div>
-            <div class="detail-row">
-              <span class="label">Status:</span>
-              <span class="value" :class="{ complete: selectedTree.is_fully_grown }">
-                {{ selectedTree.is_fully_grown ? 'Fully Grown' : 'Partially Grown' }}
-              </span>
-            </div>
-          </div>
-        </div>
-      </div>
     </div>
   </div>
 </template>
@@ -164,8 +83,6 @@ import ProgressBar from '../components/ProgressBar.vue';
 const weeklyGoal = ref(7000);
 const totalWeeklyCalories = ref(0);
 const weekDays = ref([]);
-const treeCollection = ref([]);
-const selectedTree = ref(null);
 const isTreeSaved = ref(false);
 const treeColor = ref('#ADC178');
 
@@ -432,32 +349,12 @@ const saveTree = async () => {
   const result = await treeService.createTree(treeData);
   if (result) {
     isTreeSaved.value = true;
-    treeCollection.value.unshift(result);
     alert('Tree saved to your forest!');
   }
 };
 
-const loadTreeCollection = async () => {
-  const { data: authUser } = await supabase.auth.getUser();
-  if (!authUser.user) return;
-
-  try {
-    treeCollection.value = await treeService.getAllTrees(authUser.user.id);
-  } catch (error) {
-    // Tree table might not exist - ignore error
-    console.log('ℹ️ Could not load tree collection (this is okay if tree_logs table doesn\'t exist)');
-    treeCollection.value = [];
-  }
-};
-
-const formatTreeWeek = (weekStartDate) => {
-  const date = new Date(weekStartDate);
-  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-};
-
 onMounted(async () => {
   await loadWeeklyData();
-  await loadTreeCollection();
 });
 </script>
 
@@ -498,6 +395,23 @@ onMounted(async () => {
 }
 
 /* Tree of the Week Section */
+.row.align-items-stretch > [class*='col-'] {
+  display: flex;
+}
+
+.equal-height {
+  height: 100%;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.daily-progress-card .card-body {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
 .tree-section {
   background-color: rgba(225, 255, 251, 0.8);
   border-radius: 15px;
@@ -584,9 +498,10 @@ onMounted(async () => {
 
 /* Days list */
 .days-list {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
+  display: grid;
+  grid-template-rows: repeat(7, 1fr);
+  gap: 0.8rem;
+  height: 100%;
 }
 
 .day-item {
@@ -599,6 +514,7 @@ onMounted(async () => {
   transition: all 0.3s ease;
   opacity: 0.7;
   backdrop-filter: blur(6px);
+  height: 100%;
 }
 
 .day-item.completed {
@@ -678,153 +594,5 @@ onMounted(async () => {
   white-space: nowrap;
 }
 
-/* Forest Collection Section */
-.forest-card {
-  background-color: rgba(225, 255, 251, 0.8);
-  border-radius: 15px;
-  box-shadow: 0 6px 16px rgba(255, 255, 255, 0.45);
-  padding: 2rem;
-}
-
-.forest-card h3 {
-  color: #4A4A6A;
-  font-weight: 700;
-  margin-bottom: 1.5rem;
-  text-shadow: 2px 2px 4px rgba(168, 240, 215, 0.25);
-}
-
-/* Trees grid */
-.trees-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 1.5rem;
-}
-
-.tree-card {
-  background-color: rgba(255, 255, 255, 0.4);
-  border-radius: 12px;
-  padding: 1rem;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  border: 2px solid transparent;
-  text-align: center;
-  backdrop-filter: blur(6px);
-}
-
-.tree-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
-}
-
-.tree-card.fully-grown {
-  border-color: #AED9E0;
-}
-
-.tree-card-info h5 {
-  color: #4A4A6A;
-  font-weight: 700;
-  margin: 0.5rem 0;
-}
-
-.tree-week {
-  color: #5ba294;
-  font-size: 0.9rem;
-}
-
-.tree-calories {
-  color: #4A4A6A;
-  font-weight: 600;
-}
-
-.tree-badge {
-  display: inline-block;
-  margin-top: 0.4rem;
-  padding: 0.3rem 0.8rem;
-  border-radius: 12px;
-  font-size: 0.8rem;
-  font-weight: 600;
-  background-color: #DDE5B6;
-  color: #4A4A6A;
-}
-
-.tree-badge.complete {
-  background-color: #AED9E0;
-  color: #4A4A6A;
-}
-
-/* Modal overlay */
-.modal-overlay {
-  position: fixed;
-  top: 0; left: 0;
-  width: 100%; height: 100%;
-  background-color: rgba(0, 0, 0, 0.5);
-  display: flex; justify-content: center; align-items: center;
-  z-index: 1000;
-}
-
-.tree-detail-modal {
-  background-color: rgba(255, 255, 255, 0.9);
-  backdrop-filter: blur(10px);
-  padding: 2rem;
-  border-radius: 15px;
-  max-width: 600px;
-  width: 90%;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
-  position: relative;
-}
-
-.btn-close-modal {
-  position: absolute;
-  top: 1rem; right: 1rem;
-  background: none;
-  border: none;
-  font-size: 2rem;
-  color: #4A4A6A;
-  cursor: pointer;
-}
-
-.btn-close-modal:hover {
-  color: #5ba294;
-}
-
-.tree-detail-modal h3 {
-  color: #4A4A6A;
-  font-weight: 700;
-  text-align: center;
-  margin-bottom: 1rem;
-}
-
-.detail-row {
-  display: flex;
-  justify-content: space-between;
-  padding: 0.75rem 1rem;
-  background-color: rgba(240, 255, 250, 0.6);
-  border-radius: 8px;
-  margin-bottom: 0.5rem;
-  backdrop-filter: blur(4px);
-}
-
-.detail-row .label {
-  font-weight: 600;
-  color: #4A4A6A;
-}
-
-.detail-row .value {
-  color: #5ba294;
-  font-weight: 500;
-}
-
-.detail-row .value.complete {
-  color: #AED9E0;
-  font-weight: 700;
-}
-
-/* No trees */
-.no-trees {
-  text-align: center;
-  padding: 3rem;
-  color: #bef0dd;
-  font-style: italic;
-}
 </style>
 
