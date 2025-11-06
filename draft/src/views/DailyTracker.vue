@@ -43,13 +43,22 @@
                 >
                   <div class="activity-header">
                     <h4>{{ activity.activity }}</h4>
-                    <button
-                      @click="openDeleteModal(activity)"
-                      class="btn-delete"
-                      title="Delete activity"
-                    >
-                      ×
-                    </button>
+                    <div class="activity-actions">
+                      <button
+                        @click="openEditModal(activity)"
+                        class="btn-edit"
+                        title="Edit activity"
+                      >
+                        ✏️
+                      </button>
+                      <button
+                        @click="openDeleteModal(activity)"
+                        class="btn-delete"
+                        title="Delete activity"
+                      >
+                        ×
+                      </button>
+                    </div>
                   </div>
 
                   <div class="activity-details">
@@ -73,6 +82,7 @@
                       min="0"
                       max="100"
                       v-model.number="activity.completion_percentage"
+                      @input="updateActivityProgress(activity)"
                       @change="updateActivityProgress(activity)"
                       class="progress-slider"
                     />
@@ -160,6 +170,65 @@
         </form>
       </div>
     </div>
+
+    <div v-if="showEditModal" class="modal-overlay" @click="showEditModal = false">
+      <div class="modal-content" @click.stop>
+        <h3>Edit Activity</h3>
+        <form @submit.prevent="saveEditedActivity">
+          <div class="mb-3">
+            <label class="form-label">Activity Name</label>
+            <select
+              v-model="editedActivity.activity_name"
+              class="form-select"
+              required
+            >
+              <option value="" disabled>Select an activity</option>
+              <option 
+                v-for="activity in aList" 
+                :key="activity.id" 
+                :value="activity.name"
+              >
+                {{ activity.name }}
+              </option>
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Duration (minutes)</label>
+            <input
+              v-model.number="editedActivity.duration"
+              type="number"
+              class="form-control"
+              required
+            />
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Location</label>
+            <input
+              v-model="editedActivity.location"
+              type="text"
+              class="form-control"
+            />
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Activity Type</label>
+            <select v-model="editedActivity.is_outdoor" class="form-select">
+              <option :value="false">Indoor</option>
+              <option :value="true">Outdoor</option>
+            </select>
+          </div>
+
+          <div class="modal-actions">
+            <button type="button" @click="showEditModal = false" class="btn btn-cancel">
+              Cancel
+            </button>
+            <button type="submit" class="btn btn-submit">Save Changes</button>
+          </div>
+        </form>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -181,7 +250,15 @@ const dailyGoal = ref(2000);
 const showAddActivity = ref(false);
 const totalCaloriesBurnt = ref(0);
 const showDeleteModal = ref(false);
+const showEditModal = ref(false);
 const activityToDelete = ref(null);
+const activityToEdit = ref(null);
+const editedActivity = ref({
+  activity_name: '',
+  duration: 30,
+  location: '',
+  is_outdoor: false
+});
 const newActivity = ref({
   activity_name: '',
   duration: 30,
@@ -205,38 +282,94 @@ const loadActivities = async () => {
   if (!authUser.user) return;
 
   id.value = authUser.user.id;
-
   const todayStr = today.toISOString().split('T')[0];
+  
+  // Get today's day of week (1 = Monday, 7 = Sunday)
+  const todayDay = today.getDay();
+  const dayOfWeek = todayDay === 0 ? 7 : todayDay; // Convert Sunday (0) to 7
 
-  aList.value = await activityService.getActivityList()
-  console.log("Activity List: ", aList.value)
+  // Calculate week start (Monday)
+  const weekStart = new Date(today);
+  const diff = todayDay === 0 ? -6 : 1 - todayDay;
+  weekStart.setDate(today.getDate() + diff);
+  weekStart.setHours(0, 0, 0, 0);
+  const weekStartStr = weekStart.toISOString().split('T')[0];
 
-  week.value = await activityService.getActivitiesByWeek(authUser.user.id, todayStr)
-  console.log("User:", authUser.user.id, "Returned", week.value)
+  aList.value = await activityService.getActivityList();
+  console.log("Activity List: ", aList.value);
 
-  plan.value = await activityService.getActivityPlanByDate(week.value[0].id, todayStr)
-  console.log("Week:", week.value[0].id, "Returned", plan.value)
+  // Load activities from weekly_plan for today
+  const { data: weeklyPlanActivities, error: weeklyError } = await supabase
+    .from('weekly_plan')
+    .select('*')
+    .eq('user_id', authUser.user.id)
+    .eq('week_start_date', weekStartStr)
+    .eq('day_of_week', dayOfWeek);
 
+  console.log("Weekly plan activities for today:", weeklyPlanActivities);
+
+  // Load extra activities from daily_activity
+  week.value = await activityService.getActivitiesByWeek(authUser.user.id, todayStr);
+  console.log("Week data:", week.value);
+
+  let extraActivities = [];
+  if (week.value && week.value.length > 0 && week.value[0].id) {
+    extraActivities = await activityService.getActivityPlanByDate(week.value[0].id, todayStr);
+    console.log("Extra activities:", extraActivities);
+  }
+
+  // Load activity logs for progress tracking
   activities.value = await activityService.getCompletedActivitiesByDate(authUser.user.id, todayStr);
-  console.log("User:", authUser.user.id, " date:", todayStr, "Returned", activities.value)
+  console.log("Activity logs:", activities.value);
 
   activities.value = activities.value.map(a => ({
-      ...a,
-      percentage: a.percentage ?? 0   // ensures no undefined
-    }));
+    ...a,
+    percentage: a.percentage ?? 0
+  }));
 
+  // Merge weekly plan activities with extra activities
+  const mergedActivities = [];
+  
+  // Add weekly plan activities
+  if (weeklyPlanActivities && weeklyPlanActivities.length > 0) {
+    weeklyPlanActivities.forEach(wp => {
+      const match = activities.value.find(a => a.activity === wp.activity_name);
+      mergedActivities.push({
+        id: wp.id,
+        activity: wp.activity_name,
+        duration: wp.duration,
+        calories: wp.estimated_calories,
+        location: wp.location,
+        is_outdoor: wp.is_outdoor,
+        outdoor: wp.is_outdoor,
+        completion_percentage: match ? match.percentage : 0,
+        source: 'weekly_plan',
+        user_id: wp.user_id // Store user_id for reference
+      });
+    });
+  }
 
-  totalCaloriesBurnt.value = calculateTotalCalories()
+  // Add extra activities
+  if (extraActivities && extraActivities.length > 0) {
+    extraActivities.forEach(extra => {
+      const match = activities.value.find(a => a.activity === extra.activity);
+      mergedActivities.push({
+        id: extra.id,
+        activity: extra.activity,
+        duration: extra.duration,
+        calories: extra.calories,
+        location: extra.location,
+        is_outdoor: extra.outdoor,
+        outdoor: extra.outdoor,
+        completion_percentage: match ? match.percentage : 0,
+        source: 'daily_activity',
+        week: extra.week // Store week reference
+      });
+    });
+  }
 
-  plan.value = plan.value.map(planActivity => {
-    const match = activities.value.find(a => a.activity === planActivity.activity);
-
-    return {
-      ...planActivity,
-      completion_percentage: match ? match.percentage : 0
-    };
-  });
-
+  plan.value = mergedActivities;
+  totalCaloriesBurnt.value = calculateTotalCalories();
 };
 
 const updateActivityProgress = async (activity) => {
@@ -246,31 +379,69 @@ const updateActivityProgress = async (activity) => {
     const d = Math.round((activity.duration * activity.completion_percentage) / 100);
     const c = Math.round((activity.calories * activity.completion_percentage) / 100);
 
+    // Update local state immediately (optimistic update) for reactive UI
     if (!match) {
-      await activityService.createActivity({
-      date : today.toISOString().split('T')[0],
-      activity : activity.activity,
-      duration : d,
-      calories : c,
-      location : activity.location,
-      outdoor : activity.outdoor,
-      user_id : id.value,
-      percentage : activity.completion_percentage
-    });
+      // Create new activity log entry locally first
+      const newActivityLog = {
+        id: Date.now(), // Temporary ID
+        date: today.toISOString().split('T')[0],
+        activity: activity.activity,
+        duration: d,
+        calories: c,
+        location: activity.location,
+        outdoor: activity.outdoor,
+        user_id: id.value,
+        percentage: activity.completion_percentage
+      };
+      activities.value.push(newActivityLog);
+      
+      // Update total calories immediately
+      totalCaloriesBurnt.value = calculateTotalCalories();
+      
+      // Then save to database
+      const savedActivity = await activityService.createActivity({
+        date: today.toISOString().split('T')[0],
+        activity: activity.activity,
+        duration: d,
+        calories: c,
+        location: activity.location,
+        outdoor: activity.outdoor,
+        user_id: id.value,
+        percentage: activity.completion_percentage
+      });
 
-    activities.value = await activityService.getCompletedActivitiesByDate(id.value, today.toISOString().split('T')[0]);
-    console.log("UPDATED > User:", id.value, "Returned", activities.value)
+      // Replace temporary entry with saved entry
+      if (savedActivity) {
+        const tempIndex = activities.value.findIndex(a => a.id === newActivityLog.id);
+        if (tempIndex !== -1) {
+          activities.value[tempIndex] = savedActivity;
+        }
+      }
 
-    return
+      console.log("UPDATED > User:", id.value, "Returned", activities.value);
+      return;
     }
 
-    await activityService.updateActivity(match.id, {
-      duration : d,
-      calories : c,
-      percentage : activity.completion_percentage
-    });
+    // Update existing activity log entry locally first
+    const activityIndex = activities.value.findIndex(a => a.id === match.id);
+    if (activityIndex !== -1) {
+      activities.value[activityIndex] = {
+        ...activities.value[activityIndex],
+        duration: d,
+        calories: c,
+        percentage: activity.completion_percentage
+      };
+    }
 
-    totalCaloriesBurnt.value = calculateTotalCalories()
+    // Update total calories immediately
+    totalCaloriesBurnt.value = calculateTotalCalories();
+
+    // Then save to database
+    await activityService.updateActivity(match.id, {
+      duration: d,
+      calories: c,
+      percentage: activity.completion_percentage
+    });
   }
 };
 
@@ -333,6 +504,141 @@ const deleteActivity = async () => {
 const openDeleteModal = (activity) => {
   activityToDelete.value = activity;
   showDeleteModal.value = true;
+};
+
+const openEditModal = (activity) => {
+  activityToEdit.value = activity;
+  editedActivity.value = {
+    activity_name: activity.activity,
+    duration: activity.duration || 30,
+    location: activity.location || '',
+    is_outdoor: activity.is_outdoor || activity.outdoor || false
+  };
+  showEditModal.value = true;
+};
+
+const saveEditedActivity = async () => {
+  if (!activityToEdit.value) return;
+
+  const { data: authUser } = await supabase.auth.getUser();
+  if (!authUser.user) {
+    alert('Please log in to edit activities');
+    return;
+  }
+
+  const user = await userService.getCurrentUser();
+  const match = aList.value.find(a => a.name === editedActivity.value.activity_name);
+  
+  if (!match) {
+    alert('Activity not found in list');
+    return;
+  }
+
+  // Ensure proper data types
+  const duration = Math.round(Number(editedActivity.value.duration)) || 0;
+  const caloriesBurnt = Math.round(match.met * 3.5 * user.weight / 200 * duration);
+  const isOutdoor = editedActivity.value.is_outdoor ? 1 : 0; // Convert boolean to integer (0 or 1)
+
+  console.log('📝 Updating activity with values:', {
+    activity_name: editedActivity.value.activity_name,
+    duration,
+    caloriesBurnt,
+    location: editedActivity.value.location,
+    isOutdoor,
+    source: activityToEdit.value.source
+  });
+
+  try {
+    // Update based on source
+    if (activityToEdit.value.source === 'weekly_plan') {
+      // Update weekly_plan entry - include user_id check for RLS
+      const { data, error } = await supabase
+        .from('weekly_plan')
+        .update({
+          activity_name: editedActivity.value.activity_name,
+          duration: duration,
+          estimated_calories: caloriesBurnt,
+          location: editedActivity.value.location || null,
+          is_outdoor: isOutdoor
+        })
+        .eq('id', activityToEdit.value.id)
+        .eq('user_id', authUser.user.id)
+        .select();
+
+      if (error) {
+        console.error('Error updating weekly plan activity:', error);
+        console.error('Error details:', {
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          code: error.code
+        });
+        alert(`Failed to update activity: ${error.message || 'Unknown error'}\n\nCheck browser console for details.`);
+        return;
+      }
+
+      if (!data || data.length === 0) {
+        alert('Activity not found or you do not have permission to edit it.');
+        return;
+      }
+    } else if (activityToEdit.value.source === 'daily_activity') {
+      // Update daily_activity entry
+      const { data, error } = await supabase
+        .from('daily_activity')
+        .update({
+          activity: editedActivity.value.activity_name,
+          duration: duration,
+          calories: caloriesBurnt,
+          location: editedActivity.value.location || null,
+          outdoor: isOutdoor
+        })
+        .eq('id', activityToEdit.value.id)
+        .select();
+
+      if (error) {
+        console.error('Error updating daily activity:', error);
+        console.error('Error details:', {
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          code: error.code
+        });
+        alert(`Failed to update activity: ${error.message || 'Unknown error'}\n\nCheck browser console for details.`);
+        return;
+      }
+
+      if (!data || data.length === 0) {
+        alert('Activity not found or you do not have permission to edit it.');
+        return;
+      }
+    } else {
+      // Fallback: try to determine source or update both
+      console.warn('Activity source not found, attempting to update both tables');
+      alert('Unable to determine activity source. Please refresh the page and try again.');
+      return;
+    }
+
+    // Update activity in plan array
+    const index = plan.value.findIndex(a => a.id === activityToEdit.value.id);
+    if (index !== -1) {
+      plan.value[index] = {
+        ...plan.value[index],
+        activity: editedActivity.value.activity_name,
+        duration: duration,
+        calories: caloriesBurnt,
+        location: editedActivity.value.location || null,
+        is_outdoor: isOutdoor === 1,
+        outdoor: isOutdoor === 1
+      };
+    }
+
+    showEditModal.value = false;
+    activityToEdit.value = null;
+    await loadActivities();
+  } catch (error) {
+    console.error('Error saving edited activity:', error);
+    alert('An error occurred while saving the activity.');
+  }
 };
 
 onMounted(async () => {
@@ -477,6 +783,27 @@ onMounted(async () => {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 1rem;
+}
+
+.activity-actions {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.btn-edit {
+  background-color: transparent;
+  border: none;
+  color: #4A4A6A;
+  font-size: 1.2rem;
+  cursor: pointer;
+  transition: color 0.3s ease;
+  padding: 0.25rem 0.5rem;
+}
+
+.btn-edit:hover {
+  color: #AED9E0;
+  transform: scale(1.1);
 }
 
 .activity-header h4 {

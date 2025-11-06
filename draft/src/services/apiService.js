@@ -9,18 +9,21 @@ const API_NINJAS_KEY = 'OAHR8uB9r7FjiHqqmJ/EtA==e5lc9Gi9HXBBRjOi';
 export const apiService = {
   async getWeatherData(_location) {
     try {
-      // INSERT GOOGLE WEATHER API CALL HERE
-      // Example: 
-      // const response = await axios.get(`https://api.google.com/weather?location=${location}&key=${GOOGLE_WEATHER_API_KEY}`);
-      let url;
+      // Use proxy endpoint to avoid CORS issues
+      let lat, lng;
       if (typeof _location === 'object' && _location.lat && _location.lng) {
-        url = `https://weather.googleapis.com/v1/currentConditions:lookup?key=${GOOGLE_WEATHER_API_KEY}&location.latitude=${_location.lat}&location.longitude=${_location.lng}`;
+        lat = _location.lat;
+        lng = _location.lng;
       } else {
-        // fallback to default coordinates
-        url = `https://weather.googleapis.com/v1/currentConditions:lookup?key=${GOOGLE_WEATHER_API_KEY}&location.latitude=1.3521&location.longitude=103.8198`;
+        // fallback to default coordinates (Singapore)
+        lat = 1.3521;
+        lng = 103.8198;
       }
 
-      const response = await axios.get(`https://weather.googleapis.com/v1/currentConditions:lookup?key=${GOOGLE_WEATHER_API_KEY}&location.latitude=1.3521&location.longitude=103.8198`);
+      // Call proxy endpoint instead of direct API
+      const response = await axios.get('/api/weather/current', {
+        params: { lat, lng }
+      });
       const temperature= response.data.temperature.degrees;
       const feelsLike = response.data.feelsLikeTemperature.degrees;
       const uvIndex = response.data.uvIndex;
@@ -59,6 +62,203 @@ export const apiService = {
       };
     } catch (error) {
       console.error('Error fetching weather data:', error);
+      return null;
+    }
+  },
+
+  async getWeatherForecast(_location, dates) {
+    try {
+      console.log('🌤️ getWeatherForecast called with:', { location: _location, dates });
+      
+      // Get location coordinates
+      let lat, lng;
+      if (typeof _location === 'object' && _location.lat && _location.lng) {
+        lat = _location.lat;
+        lng = _location.lng;
+        console.log('📍 Using provided coordinates:', { lat, lng });
+      } else {
+        // Default to Singapore coordinates
+        lat = 1.3521;
+        lng = 103.8198;
+        console.log('📍 Using default coordinates (Singapore):', { lat, lng });
+      }
+
+      // Calculate number of days needed (up to 10 days max for Google Weather API)
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      // Find the maximum date in the dates array
+      const maxDate = dates.reduce((max, date) => {
+        const d = new Date(date);
+        d.setHours(0, 0, 0, 0);
+        return d > max ? d : max;
+      }, today);
+      
+      // Calculate days difference
+      const daysDiff = Math.ceil((maxDate - today) / (1000 * 60 * 60 * 24));
+      const daysToFetch = Math.min(Math.max(daysDiff, 1), 10);
+      
+      console.log('📅 Date calculation:', {
+        today: today.toISOString().split('T')[0],
+        maxDate: maxDate.toISOString().split('T')[0],
+        daysDiff,
+        daysToFetch,
+        requestedDates: dates.map(d => new Date(d).toISOString().split('T')[0])
+      });
+
+      // Fetch daily forecast using proxy endpoint to avoid CORS issues
+      console.log('🔗 Fetching forecast via proxy:', { lat, lng, daysToFetch });
+      
+      const response = await axios.get('/api/weather/forecast', {
+        params: { lat, lng, days: daysToFetch }
+      });
+      
+      console.log('📡 API Response received:', {
+        status: response.status,
+        dataKeys: Object.keys(response.data || {}),
+        fullResponse: response.data
+      });
+      
+      // Handle different possible response structures
+      let forecastDays = null;
+      if (response.data?.dailyForecast?.days) {
+        forecastDays = response.data.dailyForecast.days;
+        console.log('✅ Found forecast days in response.data.dailyForecast.days');
+      } else if (response.data?.days) {
+        forecastDays = response.data.days;
+        console.log('✅ Found forecast days in response.data.days');
+      } else if (Array.isArray(response.data)) {
+        forecastDays = response.data;
+        console.log('✅ Found forecast days as array in response.data');
+      } else {
+        console.error('❌ Invalid forecast response structure:', response.data);
+        return null;
+      }
+      
+      console.log(`📊 Total forecast days received: ${forecastDays.length}`);
+      
+      // Map forecasts to requested dates
+      const forecastMap = {};
+      
+      forecastDays.forEach((forecastDay, index) => {
+        console.log(`\n🔍 Processing forecast day ${index + 1}:`, forecastDay);
+        // Parse the forecast date - handle different possible date field names
+        const dateValue = forecastDay.date || forecastDay.dateValue || forecastDay.startDate;
+        if (!dateValue) {
+          console.warn('⚠️ Forecast day missing date field:', forecastDay);
+          return;
+        }
+        
+        console.log(`   📆 Date value found: ${dateValue}`);
+        
+        const forecastDate = new Date(dateValue);
+        if (isNaN(forecastDate.getTime())) {
+          console.warn('⚠️ Invalid forecast date:', dateValue);
+          return;
+        }
+        forecastDate.setHours(0, 0, 0, 0);
+        console.log(`   📆 Parsed forecast date: ${forecastDate.toISOString().split('T')[0]}`);
+        
+        // Check if this forecast matches any requested date
+        dates.forEach((requestedDate, reqIndex) => {
+          const reqDate = new Date(requestedDate);
+          if (isNaN(reqDate.getTime())) {
+            console.warn(`⚠️ Invalid requested date ${reqIndex}:`, requestedDate);
+            return;
+          }
+          reqDate.setHours(0, 0, 0, 0);
+          
+          const reqDateStr = reqDate.toISOString().split('T')[0];
+          const forecastDateStr = forecastDate.toISOString().split('T')[0];
+          
+          console.log(`   🔄 Comparing: requested ${reqDateStr} vs forecast ${forecastDateStr}`);
+          
+          if (forecastDate.getTime() === reqDate.getTime()) {
+            console.log(`   ✅ Date match found! Processing weather data...`);
+            
+            // Extract relevant weather data - handle different possible structures
+            const dayForecast = forecastDay.dayForecast || forecastDay.day || forecastDay;
+            console.log(`   📦 Day forecast object:`, dayForecast);
+            
+            const temperature = dayForecast?.maxTemperature?.degrees || 
+                               dayForecast?.maxTemp?.degrees || 
+                               dayForecast?.temperature?.max || 
+                               dayForecast?.high || null;
+            const condition = dayForecast?.conditionCode || 
+                             dayForecast?.condition || 
+                             dayForecast?.weatherCondition?.text ||
+                             'Unknown';
+            const uvIndex = dayForecast?.maxUvIndex || 
+                          dayForecast?.uvIndex || 
+                          dayForecast?.uv || null;
+            
+            console.log(`   🌡️ Extracted weather data:`, {
+              temperature,
+              condition,
+              uvIndex
+            });
+            
+            // Determine if outdoor safe using similar logic as current conditions
+            let isOutdoorSafe = true;
+            let weatherWarning = null;
+            
+            const conditionText = condition.toLowerCase();
+            console.log(`   🔍 Analyzing weather safety (condition: "${conditionText}", temp: ${temperature}, UV: ${uvIndex})`);
+            
+            if (conditionText.includes("rain") || conditionText.includes("storm") || 
+                conditionText.includes("thunder") || conditionText.includes("shower")) {
+              weatherWarning = "Wet weather expected, stay under shelter";
+              isOutdoorSafe = false;
+              console.log(`   ⛈️ Weather unsafe: Rain/storm detected`);
+            } else if ((uvIndex && uvIndex > 5) || (temperature && temperature > 32)) {
+              weatherWarning = "Dangerous weather expected, avoid outdoor activities";
+              isOutdoorSafe = false;
+              console.log(`   ☀️ Weather unsafe: High UV (${uvIndex}) or temperature (${temperature}°C)`);
+            } else if ((uvIndex && uvIndex > 2) || (temperature && temperature > 27)) {
+              weatherWarning = "Safe for outdoor activities, but stay hydrated and apply sunscreen";
+              isOutdoorSafe = true;
+              console.log(`   ⚠️ Weather moderate: UV ${uvIndex} or temp ${temperature}°C - caution advised`);
+            } else {
+              weatherWarning = "Great weather for outdoor activities!";
+              isOutdoorSafe = true;
+              console.log(`   ✅ Weather safe: Good conditions for outdoor activities`);
+            }
+            
+            const minTemperature = dayForecast?.minTemperature?.degrees || 
+                                   dayForecast?.minTemp?.degrees || 
+                                   dayForecast?.temperature?.min || 
+                                   dayForecast?.low || null;
+
+            const forecastEntry = {
+              date: requestedDate,
+              temperature,
+              condition,
+              uvIndex,
+              isOutdoorSafe,
+              weatherWarning,
+              minTemperature,
+              fullForecast: forecastDay
+            };
+            
+            forecastMap[requestedDate.toISOString().split('T')[0]] = forecastEntry;
+            console.log(`   ✅ Added forecast entry for ${reqDateStr}:`, forecastEntry);
+          } else {
+            console.log(`   ❌ Date mismatch - skipping`);
+          }
+        });
+      });
+
+      console.log('\n📋 Final forecast map:', forecastMap);
+      console.log(`✅ Returning ${Object.keys(forecastMap).length} forecast entries`);
+      
+      return forecastMap;
+    } catch (error) {
+      console.error('❌ Frontend: Error fetching weather forecast:', error);
+      if (error.response) {
+        console.error('  Response status:', error.response.status);
+        console.error('  Response data:', error.response.data);
+        console.error('  API Error details:', error.response.data?.apiError);
+      }
       return null;
     }
   },

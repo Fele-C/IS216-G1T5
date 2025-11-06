@@ -28,6 +28,14 @@
             <p class="activity-meta">
               {{ day.activity.duration }} min · {{ day.activity.estimated_calories }} kcal
             </p>
+            <p v-if="day.activity.location" class="activity-location">
+              📍 {{ day.activity.location }}
+            </p>
+            <span v-if="day.activity.is_outdoor" class="activity-badge outdoor">☀️ Outdoor</span>
+            <span v-else class="activity-badge indoor">🏠 Indoor</span>
+            <p v-if="day.activity.weather_warning" class="weather-warning-small">
+              ⚠️ {{ day.activity.weather_warning }}
+            </p>
           </div>
           <div v-else class="no-activity-text">
             Click to add activity
@@ -40,6 +48,8 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue';
+import { supabase } from '../lib/supabase.js';
+import { userService } from '../services/userService.js';
 
 const currentWeekOffset = ref(0);
 const weekDays = ref([]);
@@ -75,9 +85,65 @@ const weekRangeFormatted = computed(() => {
   return `${startStr} - ${endStr}`;
 });
 
-// Load weekly plan (for now just generate empty days)
-const loadWeeklyPlan = () => {
+// Load weekly plan from Supabase
+const loadWeeklyPlan = async () => {
+  // First, generate empty structure for all 7 days
   weekDays.value = generateWeekDays();
+
+  try {
+    const user = await userService.getCurrentUser();
+    if (!user) {
+      console.warn('No user logged in, showing empty plan');
+      return;
+    }
+
+    const weekStartStr = weekStart.value.toISOString().split('T')[0];
+    
+    console.log('📋 Loading weekly plan from Supabase:', {
+      userId: user.id,
+      weekStart: weekStartStr
+    });
+
+    // Fetch plans from Supabase for this week
+    const { data, error } = await supabase
+      .from('weekly_plan')
+      .select('*')
+      .eq('user_id', user.id)
+      .eq('week_start_date', weekStartStr)
+      .order('day_of_week', { ascending: true });
+
+    if (error) {
+      console.error('❌ Error loading weekly plan:', error);
+      return;
+    }
+
+    console.log('✅ Loaded plans from Supabase:', data);
+
+    // Map the plans to the week days
+    if (data && data.length > 0) {
+      data.forEach(plan => {
+        const dayIndex = plan.day_of_week - 1; // day_of_week is 1-7, array is 0-6
+        if (dayIndex >= 0 && dayIndex < weekDays.value.length) {
+          weekDays.value[dayIndex].activity = {
+            name: plan.activity_name,
+            duration: plan.duration,
+            estimated_calories: plan.estimated_calories,
+            location: plan.location,
+            is_outdoor: plan.is_outdoor,
+            weather_warning: plan.weather_warning,
+            forecast: plan.forecast_temperature ? {
+              temperature: plan.forecast_temperature,
+              condition: plan.forecast_condition,
+              uvIndex: plan.forecast_uv_index,
+              isOutdoorSafe: plan.forecast_is_outdoor_safe
+            } : null
+          };
+        }
+      });
+    }
+  } catch (error) {
+    console.error('❌ Error loading weekly plan:', error);
+  }
 };
 
 const navigateWeek = (direction) => {
@@ -85,7 +151,7 @@ const navigateWeek = (direction) => {
   loadWeeklyPlan();
 };
 
-// Add activity locally
+// Add activity locally (optional - can be removed if you don't want this feature)
 const addActivity = (day) => {
   const name = prompt(`Enter activity for ${day.name}:`);
   if (!name) return;
@@ -228,6 +294,40 @@ onMounted(() => {
 .activity-meta {
   font-size: 0.9rem;
   color: #666;
+}
+
+.activity-location {
+  font-size: 0.85rem;
+  color: #888;
+  margin-top: 5px;
+}
+
+.activity-badge {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  margin-top: 8px;
+}
+
+.activity-badge.outdoor {
+  background-color: #e8f5e9;
+  color: #2e7d32;
+}
+
+.activity-badge.indoor {
+  background-color: #e3f2fd;
+  color: #1565c0;
+}
+
+.weather-warning-small {
+  font-size: 0.8rem;
+  color: #856404;
+  background-color: #fff3cd;
+  padding: 4px 8px;
+  border-radius: 4px;
+  margin-top: 8px;
 }
 
 /* Empty card styling */

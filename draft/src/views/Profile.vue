@@ -23,7 +23,7 @@
               </div>
 
               <div class="stat-item">
-                <div class="stat-label">Recommended Daily Calories</div>
+                <div class="stat-label">Recommended Daily Calories To Burn</div>
                 <div class="stat-value">{{ profile.recommended_calories || 2000 }} kcal</div>
               </div>
 

@@ -10,6 +10,7 @@ const PORT = process.env.PORT || 3000;
 
 
 app.use(cors());
+app.use(express.json()); // Add JSON body parsing
 
 function getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) {
     const R = 6371; // Radius of Earth in km
@@ -24,6 +25,116 @@ function getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) {
     return R * c; // distance in km
   }
   
+
+// Weather API endpoints
+const GOOGLE_WEATHER_API_KEY = process.env.GOOGLE_WEATHER_API_KEY || 'AIzaSyDowpr_xuUgYE9czDZ3rNjcZjqxgRkNLVU';
+
+// Current weather conditions endpoint
+app.get('/api/weather/current', async (req, res) => {
+  const { lat, lng } = req.query;
+
+  // Default to Singapore if no coordinates provided
+  const latitude = lat || '1.3521';
+  const longitude = lng || '103.8198';
+
+  try {
+    const url = `https://weather.googleapis.com/v1/currentConditions:lookup?key=${GOOGLE_WEATHER_API_KEY}&location.latitude=${latitude}&location.longitude=${longitude}`;
+    
+    console.log('🌡️ Server: Fetching current weather from:', url.replace(GOOGLE_WEATHER_API_KEY, 'API_KEY_HIDDEN'));
+    
+    const response = await axios.get(url);
+    res.json(response.data);
+  } catch (err) {
+    console.error('❌ Server: Error fetching current weather:');
+    console.error('  Message:', err.message);
+    console.error('  Status:', err.response?.status);
+    console.error('  Response Data:', err.response?.data);
+    
+    res.status(500).json({ 
+      error: 'Failed to fetch current weather', 
+      details: err.message,
+      apiError: err.response?.data || null
+    });
+  }
+});
+
+// Weather forecast endpoint
+app.get('/api/weather/forecast', async (req, res) => {
+  const { lat, lng, days } = req.query;
+
+  // Default to Singapore if no coordinates provided
+  const latitude = lat || '1.3521';
+  const longitude = lng || '103.8198';
+  const daysToFetch = days || '10';
+
+  try {
+    // Google Weather API uses POST with JSON body
+    // The endpoint format is: https://weather.googleapis.com/v1/forecast.days:lookup
+    const url = `https://weather.googleapis.com/v1/forecast.days:lookup?key=${GOOGLE_WEATHER_API_KEY}`;
+    
+    const requestBody = {
+      location: {
+        latitude: parseFloat(latitude),
+        longitude: parseFloat(longitude)
+      },
+      days: parseInt(daysToFetch)
+    };
+    
+    console.log('🌤️ Server: Fetching forecast via POST to:', url.replace(GOOGLE_WEATHER_API_KEY, 'API_KEY_HIDDEN'));
+    console.log('  Request body:', JSON.stringify(requestBody, null, 2));
+    
+    // Google Weather API requires POST request
+    const response = await axios.post(url, requestBody, {
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+    
+    console.log('✅ Server: Forecast response received:', {
+      status: response.status,
+      dataKeys: Object.keys(response.data || {}),
+      hasData: !!response.data,
+      responseStructure: response.data ? Object.keys(response.data) : 'No data'
+    });
+    
+    // Log the full response structure for debugging
+    if (response.data) {
+      console.log('  Full response structure:', JSON.stringify(response.data, null, 2).substring(0, 500));
+    }
+    
+    res.json(response.data);
+  } catch (err) {
+    console.error('❌ Server: Error fetching weather forecast:');
+    console.error('  Message:', err.message);
+    console.error('  Status:', err.response?.status);
+    console.error('  Status Text:', err.response?.statusText);
+    
+    // Log the error response more clearly
+    if (err.response?.data) {
+      if (typeof err.response.data === 'string') {
+        console.error('  Response Data (HTML):', err.response.data.substring(0, 500));
+      } else {
+        console.error('  Response Data (JSON):', JSON.stringify(err.response.data, null, 2));
+      }
+    }
+    
+    // Check if it's a 404 - might indicate wrong endpoint or API not enabled
+    if (err.response?.status === 404) {
+      console.error('  ⚠️ 404 Error - Possible causes:');
+      console.error('    1. Weather API not enabled for this API key');
+      console.error('    2. Wrong endpoint URL');
+      console.error('    3. API key doesn\'t have access to Weather API');
+    }
+    
+    res.status(500).json({ 
+      error: 'Failed to fetch weather forecast', 
+      details: err.message,
+      apiError: err.response?.data || null,
+      status: err.response?.status || null,
+      suggestion: err.response?.status === 404 ? 'Check if Weather API is enabled in Google Cloud Console' : null
+    });
+  }
+});
 
 app.get('/api/nearby-places', async (req, res) => {
   const { lat, lng, radius = 5000, type = 'park' } = req.query;

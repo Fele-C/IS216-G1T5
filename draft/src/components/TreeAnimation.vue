@@ -46,11 +46,15 @@ const props = withDefaults(defineProps(), {
 });
 
 const growthStage = computed(() => {
-  if (props.growthPercentage >= 90) return 5;
-  if (props.growthPercentage >= 70) return 4;
-  if (props.growthPercentage >= 50) return 3;
-  if (props.growthPercentage >= 20) return 2;
-  return 1;
+  // Stages based on 25% milestones:
+  // 0-25%: seed (stage 1)
+  // 25-50%: seedling (stage 2)
+  // 50-75%: young tree (stage 3)
+  // 75-100%: full tree with fruits (stage 5)
+  if (props.growthPercentage >= 75) return 5; // Full tree with fruits
+  if (props.growthPercentage >= 50) return 3; // Young tree
+  if (props.growthPercentage >= 25) return 2; // Seedling
+  return 1; // Seed
 });
 
 const fruits = [

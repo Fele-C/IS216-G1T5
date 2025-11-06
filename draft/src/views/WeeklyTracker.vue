@@ -16,9 +16,11 @@
                 :current-value="totalWeeklyCalories"
                 :max-value="weeklyGoal"
                 :color="progressColor"
+                :show-percentage="true"
               />
               <div class="calories-summary">
                 <p><strong>{{ totalWeeklyCalories }}</strong> / {{ weeklyGoal }} kcal</p>
+                <p class="percentage-text">{{ weeklyGrowthPercentage }}% Complete</p>
               </div>
 
               <button
@@ -43,16 +45,21 @@
                   v-for="(day, index) in weekDays"
                   :key="index"
                   class="day-item"
-                  :class="{ completed: day.calories > 0, today: day.isToday }"
+                  :class="{ 
+                    completed: (day.calories > 0) || day.hasPlannedActivity, 
+                    today: day.isToday,
+                    upcoming: day.isUpcoming && !day.isToday,
+                    'no-activity': (!day.calories) && (!day.hasPlannedActivity) && !day.isUpcoming && !day.isToday
+                  }"
                 >
                   <div class="day-header">
                     <span class="day-name">{{ day.name }}</span>
                     <span class="day-date">{{ day.date }}</span>
                   </div>
                   <div class="day-progress">
-                    <div class="water-drops">💧</div>
-                    <!-- <span class="day-calories">{{ day.calories }} kcal</span> -->
-                    <span class="day-calories">{{ day.isToday ? totalCaloriesBurnt : day.calories }} kcal</span>
+                    <div v-if="(day.calories > 0 || day.hasPlannedActivity) && !day.isUpcoming" class="water-drops">💧</div>
+                    <div v-if="day.isUpcoming && day.hasPlannedActivity" class="upcoming-icon">📅</div>
+                    <span class="day-calories">{{ day.calories || 0 }} kcal</span>
                   </div>
                 </div>
               </div>
@@ -143,17 +150,6 @@
       </div>
     </div>
   </div>
-  <div class="mini-map">
-              <iframe
-                width="300"
-                height="150"
-                style="border:0; border-radius:10px;"
-                loading="lazy"
-                allowfullscreen
-                referrerpolicy="no-referrer-when-downgrade"
-                :src="`https://www.google.com/maps/embed/v1/view?key=AIzaSyCdAB6Z2sTSA41CStyvIQgj5IPa8OiqIFg&center=${latitude},${longitude}&zoom=13`">
-              </iframe>
-            </div>
 </template>
 
 <script setup>
@@ -164,7 +160,6 @@ import { userService } from '../services/userService.js';
 import { supabase } from '../lib/supabase.js';
 import TreeAnimation from '../components/TreeAnimation.vue';
 import ProgressBar from '../components/ProgressBar.vue';
-import { totalCaloriesBurnt } from '../services/trackerService.js';
 
 const weeklyGoal = ref(7000);
 const totalWeeklyCalories = ref(0);
@@ -185,6 +180,10 @@ const getWeekStart = () => {
 };
 
 const weekStart = getWeekStart();
+
+// Default location (Singapore coordinates)
+const latitude = ref(1.3521);
+const longitude = ref(103.8198);
 
 const weekStartFormatted = computed(() => {
   return weekStart.toLocaleDateString('en-US', {
@@ -212,23 +211,36 @@ const isWeekComplete = computed(() => {
   return today >= weekEnd;
 });
 
+// Helper function to format date as YYYY-MM-DD without timezone issues
+const formatDateString = (date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 const generateWeekDays = () => {
   const days = [];
   const today = new Date();
+  today.setHours(0, 0, 0, 0);
   const dayNames = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
   for (let i = 0; i < 7; i++) {
     const date = new Date(weekStart);
     date.setDate(weekStart.getDate() + i);
+    date.setHours(0, 0, 0, 0);
 
-    const isToday = date.toDateString() === today.toDateString();
+    const isToday = date.getTime() === today.getTime();
+    const isUpcoming = date.getTime() > today.getTime();
 
     days.push({
       name: dayNames[i],
       date: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-      dateStr: date.toISOString().split('T')[0],
+      dateStr: formatDateString(date),
       calories: 0,
-      isToday
+      hasPlannedActivity: false,
+      isToday,
+      isUpcoming
     });
   }
 
@@ -240,27 +252,152 @@ const loadWeeklyData = async () => {
   if (!authUser.user) return;
 
   weekDays.value = generateWeekDays();
-
-  const weekStartStr = weekStart.toISOString().split('T')[0];
-  const activities = await activityService.getActivitiesByWeek(authUser.user.id, weekStartStr);
-
-  let total = 0;
-  activities.forEach(activity => {
-    const dayIndex = weekDays.value.findIndex(d => d.dateStr === activity.activity_date);
-    if (dayIndex !== -1) {
-      const caloriesForActivity = Math.round(
-        (activity.calories_burnt * activity.completion_percentage) / 100
-      );
-      weekDays.value[dayIndex].calories += caloriesForActivity;
-      total += caloriesForActivity;
-    }
+  // Format dates without timezone issues - use the same formatDateString function
+  const weekStartStr = formatDateString(weekStart);
+  
+  const weekEnd = new Date(weekStart);
+  weekEnd.setDate(weekStart.getDate() + 6);
+  const weekEndStr = formatDateString(weekEnd);
+  
+  console.log('📅 WeeklyTracker: Loading data for week:', {
+    weekStart: weekStartStr,
+    weekEnd: weekEndStr,
+    weekDays: weekDays.value.map(d => ({ name: d.name, dateStr: d.dateStr }))
   });
 
-  totalWeeklyCalories.value = total;
+  // 1. Load weekly plan to get goal and planned activities
+  console.log('📋 WeeklyTracker: Querying weekly_plan with week_start_date:', weekStartStr);
+  const { data: weeklyPlans, error: planError } = await supabase
+    .from('weekly_plan')
+    .select('*')
+    .eq('user_id', authUser.user.id)
+    .eq('week_start_date', weekStartStr)
+    .order('day_of_week', { ascending: true });
 
-  const existingTree = await treeService.getTreeByWeek(authUser.user.id, weekStartStr);
-  if (existingTree) {
-    isTreeSaved.value = true;
+  if (planError) {
+    console.error('❌ Error loading weekly plan:', planError);
+  } else {
+    console.log('📋 WeeklyTracker: Loaded weekly plans:', weeklyPlans);
+    
+    if (weeklyPlans && weeklyPlans.length > 0) {
+      // Calculate weekly goal (sum of all estimated_calories)
+      weeklyGoal.value = weeklyPlans.reduce((sum, plan) => sum + (plan.estimated_calories || 0), 0);
+      console.log('🎯 WeeklyTracker: Weekly goal calculated:', weeklyGoal.value);
+      
+      // Mark days with planned activities
+      weeklyPlans.forEach(plan => {
+        const dayIndex = plan.day_of_week - 1; // day_of_week is 1-7, array is 0-6
+        if (dayIndex >= 0 && dayIndex < weekDays.value.length) {
+          weekDays.value[dayIndex].hasPlannedActivity = true;
+          console.log(`✅ Marked ${weekDays.value[dayIndex].name} (day ${plan.day_of_week}) as having planned activity`);
+        }
+      });
+    } else {
+      console.log('⚠️ WeeklyTracker: No weekly plans found for this week');
+      // If no weekly plan exists, use user's recommended daily calories * 7 as fallback
+      const user = await userService.getCurrentUser();
+      if (user && user.recommended_calories) {
+        weeklyGoal.value = user.recommended_calories * 7;
+        console.log('📊 WeeklyTracker: Using fallback goal from user profile:', weeklyGoal.value);
+      } else {
+        weeklyGoal.value = 0;
+        console.log('⚠️ WeeklyTracker: No weekly plan and no user profile found, setting goal to 0');
+      }
+    }
+  }
+
+  // 2. Load activity_log entries for each day of the week
+  // Load all activity logs for the user and filter client-side (more reliable than server-side date range queries)
+  console.log('📊 WeeklyTracker: Loading activity_log for date range:', { weekStartStr, weekEndStr });
+  
+  const { data: allActivityLogs, error: logError } = await supabase
+    .from('activity_log')
+    .select('date, calories, activity')
+    .eq('user_id', authUser.user.id);
+  
+  if (logError) {
+    console.error('❌ Error loading activity logs:', logError);
+    console.error('❌ Error details:', {
+      message: logError.message,
+      details: logError.details,
+      hint: logError.hint,
+      code: logError.code
+    });
+    totalWeeklyCalories.value = 0;
+  } else {
+    console.log('📊 WeeklyTracker: Loaded all activity logs:', allActivityLogs);
+    
+    // Filter logs by date range client-side
+    const activityLogs = (allActivityLogs || []).filter(log => {
+      // Normalize date string
+      let logDate;
+      if (typeof log.date === 'string') {
+        logDate = log.date.split('T')[0]; // Remove time part if present
+      } else {
+        logDate = formatDateString(new Date(log.date));
+      }
+      // Check if date is within the week range
+      return logDate >= weekStartStr && logDate <= weekEndStr;
+    });
+    
+    console.log('📊 WeeklyTracker: Filtered activity logs for this week:', activityLogs);
+    
+    if (activityLogs && activityLogs.length > 0) {
+      // Group calories by date
+      const caloriesByDate = {};
+      activityLogs.forEach(log => {
+        // Normalize date string - handle both string and date objects
+        let logDate;
+        if (typeof log.date === 'string') {
+          // If it's already a string, use it directly (should be YYYY-MM-DD)
+          logDate = log.date.split('T')[0]; // Remove time part if present
+        } else {
+          // If it's a date object, format it
+          logDate = formatDateString(new Date(log.date));
+        }
+        
+        if (!caloriesByDate[logDate]) {
+          caloriesByDate[logDate] = 0;
+        }
+        caloriesByDate[logDate] += (Number(log.calories) || 0);
+      });
+
+      console.log('📊 WeeklyTracker: Calories grouped by date:', caloriesByDate);
+
+      // Update weekDays with calories from activity_log
+      let total = 0;
+      weekDays.value.forEach(day => {
+        // Match by exact date string
+        if (caloriesByDate[day.dateStr]) {
+          day.calories = caloriesByDate[day.dateStr];
+          total += day.calories;
+          console.log(`✅ Matched ${day.name} (${day.dateStr}): ${day.calories} kcal`);
+        } else {
+          // Log for debugging - show what dates we have vs what we're looking for
+          const availableDates = Object.keys(caloriesByDate);
+          if (availableDates.length > 0) {
+            console.log(`❌ No match for ${day.name} (${day.dateStr}). Available dates:`, availableDates);
+          }
+        }
+      });
+
+      totalWeeklyCalories.value = total;
+      console.log('📊 WeeklyTracker: Total weekly calories:', totalWeeklyCalories.value);
+    } else {
+      console.log('⚠️ WeeklyTracker: No activity logs found for this week');
+      totalWeeklyCalories.value = 0;
+    }
+  }
+
+  // Check if tree already saved (handle 404 errors gracefully)
+  try {
+    const existingTree = await treeService.getTreeByWeek(authUser.user.id, weekStartStr);
+    if (existingTree) {
+      isTreeSaved.value = true;
+    }
+  } catch (error) {
+    // Tree table might not exist or have different structure - ignore error
+    console.log('ℹ️ Could not check tree status (this is okay if tree_logs table doesn\'t exist)');
   }
 };
 
@@ -271,10 +408,10 @@ const saveTree = async () => {
     return;
   }
 
-  const weekStartStr = weekStart.toISOString().split('T')[0];
+  const weekStartStr = formatDateString(weekStart);
   const weekEnd = new Date(weekStart);
   weekEnd.setDate(weekStart.getDate() + 6);
-  const weekEndStr = weekEnd.toISOString().split('T')[0];
+  const weekEndStr = formatDateString(weekEnd);
 
   const isFullyGrown = weeklyGrowthPercentage.value >= 100;
   const size = weeklyGrowthPercentage.value < 40 ? 'small' :
@@ -304,7 +441,13 @@ const loadTreeCollection = async () => {
   const { data: authUser } = await supabase.auth.getUser();
   if (!authUser.user) return;
 
-  treeCollection.value = await treeService.getAllTrees(authUser.user.id);
+  try {
+    treeCollection.value = await treeService.getAllTrees(authUser.user.id);
+  } catch (error) {
+    // Tree table might not exist - ignore error
+    console.log('ℹ️ Could not load tree collection (this is okay if tree_logs table doesn\'t exist)');
+    treeCollection.value = [];
+  }
 };
 
 const formatTreeWeek = (weekStartDate) => {
@@ -313,10 +456,6 @@ const formatTreeWeek = (weekStartDate) => {
 };
 
 onMounted(async () => {
-  const user = await userService.getCurrentUser();
-  if (user) {
-    weeklyGoal.value = user.recommended_calories * 7;
-  }
   await loadWeeklyData();
   await loadTreeCollection();
 });
@@ -388,6 +527,14 @@ onMounted(async () => {
   font-size: 1.3rem;
   color: #5ba294;
   font-weight: 600;
+  margin: 0.5rem 0;
+}
+
+.percentage-text {
+  font-size: 1.1rem;
+  color: #4A4A6A;
+  font-weight: 600;
+  margin-top: 0.5rem;
 }
 
 /* Save tree button */
@@ -456,13 +603,44 @@ onMounted(async () => {
 
 .day-item.completed {
   opacity: 1;
-  background-color: rgba(180, 255, 228, 0.6);
+  background-color: rgba(174, 217, 224, 0.7); /* Blue for completed days */
+  border: 2px solid rgba(174, 217, 224, 0.9);
+  box-shadow: 0 2px 8px rgba(174, 217, 224, 0.3);
 }
 
 .day-item.today {
-  border: 2px solid #AED9E0;
+  border: 3px solid #FFD700; /* Gold border for today */
   opacity: 1;
-  background-color: rgba(192, 248, 235, 0.8);
+  background: linear-gradient(135deg, rgba(255, 215, 0, 0.2), rgba(255, 223, 0, 0.3));
+  box-shadow: 0 4px 12px rgba(255, 215, 0, 0.4);
+  position: relative;
+  transform: scale(1.02);
+}
+
+.day-item.today::before {
+  content: 'TODAY';
+  position: absolute;
+  top: -8px;
+  right: 10px;
+  background-color: #FFD700;
+  color: #4A4A6A;
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+  letter-spacing: 0.5px;
+}
+
+.day-item.upcoming {
+  opacity: 0.85;
+  background-color: rgba(255, 248, 220, 0.6); /* Light yellow/cream for upcoming */
+  border: 2px solid rgba(255, 235, 180, 0.8);
+}
+
+.day-item.no-activity {
+  opacity: 0.4;
+  background-color: rgba(200, 200, 200, 0.3);
+  filter: grayscale(0.6);
 }
 
 .day-name {
@@ -476,10 +654,28 @@ onMounted(async () => {
   font-size: 0.9rem;
 }
 
+.day-progress {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.water-drops {
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+.upcoming-icon {
+  font-size: 1.3rem;
+  line-height: 1;
+  opacity: 0.8;
+}
+
 .day-calories {
   font-weight: 700;
   color: #5ba294;
   font-size: 1.2rem;
+  white-space: nowrap;
 }
 
 /* Forest Collection Section */
